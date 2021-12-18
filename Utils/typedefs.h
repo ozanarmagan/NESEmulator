@@ -11,7 +11,7 @@
 
 #include <iostream>
 
-using namespace std;
+using std::string;
 
 typedef uint8_t BYTE;
 typedef uint16_t ADDRESS;

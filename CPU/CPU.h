@@ -4,6 +4,9 @@
 #include "../Utils/handler.h"
 #include "../Bus/RAM.h"
 #include "../PPU/PPU.h"
+#include <functional>
+
+using std::function;
 
 /*  
 
@@ -18,6 +21,9 @@
     OPCODEs are illegal and they literally do nothing (NOP)
 
 */
+
+
+
 
 
 
@@ -48,7 +54,7 @@ class CPU
     private:
         using OPEXEC_PTR = void(CPU::*)(uint16_t);
         using OPEXEC = void;
-        using ADDRESSING_MODE =  ADDRESS(CPU::*)();
+        using ADDRESSING_MODE =  const function<ADDRESS ()> CPU::*;
         struct INSTRUCTION 
         {
             ADDRESSING_MODE addr;
@@ -126,7 +132,7 @@ class CPU
         OPEXEC EOR(ADDRESS source);
         OPEXEC INC(ADDRESS source);
 
-        OPEXEC INX(ADDRESS source);
+        OPEXEC INX_OP(ADDRESS source);
         OPEXEC INY_OP(ADDRESS source);
         OPEXEC JMP(ADDRESS source);
         OPEXEC JSR(ADDRESS source);
@@ -163,22 +169,33 @@ class CPU
         OPEXEC TXS(ADDRESS source);
         OPEXEC TYA(ADDRESS source);
 
-        OPEXEC ILLEGAL(ADDRESS source);          
-
+        OPEXEC ILLEGAL(ADDRESS source);         
         /*------------ADDRESSING MODES--------*/
-        ADDRESS ACC(); // ACCUMULATOR
-        ADDRESS IMM(); // IMMEDIATE
-        ADDRESS ABS(); // ABSOLUTE
-        ADDRESS ZER(); // ZERO PAGE
-        ADDRESS ZEX(); // INDEXED-X ZERO PAGE
-        ADDRESS ZEY(); // INDEXED-Y ZERO PAGE
-        ADDRESS ABX(); // INDEXED-X ABSOLUTE
-        ADDRESS ABY(); // INDEXED-Y ABSOLUTE
-        ADDRESS IMP(); // IMPLIED
-        ADDRESS REL(); // RELATIVE
-        ADDRESS INX(); // INDEXED-X INDIRECT
-        ADDRESS INY(); // INDEXED-Y INDIRECT
-        ADDRESS ABI(); // ABSOLUTE INDIRECT
+        const function<ADDRESS()> ACC = [this]() { return A; }; // ACCUMULATOR
+        const function<ADDRESS()> IMM = [this]() { return programCounter++; }; // IMMEDIATE
+        const function<ADDRESS()> ABS = [this]() { uint16_t addrLower = memory.readFromMemory(programCounter++),
+                                                        addrHigher = memory.readFromMemory(programCounter++); 
+                                                        return addrLower + (addrHigher << 8); };  // ABSOLUTE
+        const function<ADDRESS()> ZER = [this]() { return memory.readFromMemory(programCounter++); }; // ZERO PAGE
+        const function<ADDRESS()> ZEX = [this]() { return (memory.readFromMemory(programCounter++) + X) % 256; }; // INDEXED-X ZERO PAGE
+        const function<ADDRESS()> ZEY = [this]() { return (memory.readFromMemory(programCounter++) + Y) % 256; }; // INDEXED-Y ZERO PAGE
+        const function<ADDRESS()> ABX = [this]() { return ABS() + X; }; // INDEXED-X ABSOLUTE
+        const function<ADDRESS()> ABY = [this]() { return ABS() + X; }; // INDEXED-Y ABSOLUTE
+        const function<ADDRESS()> IMP = [this]() { return 0; }; // IMPLIED
+        const function<ADDRESS()> REL = [this]() { uint16_t offset = (uint16_t) memory.readFromMemory(programCounter++); 
+                                                        if(offset & 0x80) offset |= 0xFF00; 
+                                                        return programCounter + (int16_t) offset; }; // RELATIVE
+        const function<ADDRESS()> INX = [this]() { uint16_t zeroLower = ZEX(),zeroHigher = (zeroLower + 1) % 256; 
+                                                        return memory.readFromMemory(zeroLower) + (memory.readFromMemory(zeroHigher) << 8); }; // INDEXED-X INDIRECT
+        const function<ADDRESS()> INY = [this]() { uint16_t zeroLower = memory.readFromMemory(programCounter++),
+                                                        zeroHigher = (zeroLower + 1) % 256; 
+                                                        return memory.readFromMemory(zeroLower) + (memory.readFromMemory(zeroHigher) << 8) + Y; }; // INDEXED-Y INDIRECT
+        const function<ADDRESS()> ABI = [this]() { uint16_t addressLower = memory.readFromMemory(programCounter++),
+                                                        addressHigher = memory.readFromMemory(programCounter++),
+                                                        abs = (addressHigher << 8) | addressLower,
+                                                        effLower = memory.readFromMemory(abs),
+                                                        effHigher = memory.readFromMemory((abs & 0xFF00) + ((abs + 1) & 0x00FF));
+                                                        return effLower + 0x100 * effHigher; }; // ABSOLUTE INDIRECT
 
 
 };

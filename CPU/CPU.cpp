@@ -312,7 +312,7 @@ CPU::CPU(RAM& mem,PPU& ppu) : memory(mem),ppu(ppu) {
 	table[0xFE] = temp;
 
 	temp.addr = &CPU::IMP;
-	temp.operation = &CPU::INX;
+	temp.operation = &CPU::INX_OP;
 	temp.cycles = 2;
 	table[0xE8] = temp;
 
@@ -676,108 +676,6 @@ CPU::CPU(RAM& mem,PPU& ppu) : memory(mem),ppu(ppu) {
 };
 
 
-// This addressing mode is unused
-ADDRESS CPU::ACC()
-{
-    return A;    
-}
-
-
-// IMMEDIATE 
-ADDRESS CPU::IMM()
-{
-    return programCounter++;
-}
-
-
-//ABSOLUTE
-ADDRESS CPU::ABS()
-{
-    uint16_t addrLower = memory.readFromMemory(programCounter++),
-             addrHigher = memory.readFromMemory(programCounter++);
-    return addrLower + (addrHigher << 8);
-}
-
-
-// ZERO PAGE
-ADDRESS CPU::ZER()
-{
-    return memory.readFromMemory(programCounter++);
-}
-
-
-//IMPLIED
-ADDRESS CPU::IMP()
-{
-    return 0;
-}
-
-
-//RELATIVE
-ADDRESS CPU::REL()
-{
-    uint16_t offset = (uint16_t) memory.readFromMemory(programCounter++);
-    if(offset & 0x80) offset |= 0xFF00;
-    return programCounter + (int16_t) offset;
-}
-
-
-//ABSOLUTE INDIRECT
-ADDRESS CPU::ABI()
-{
-    uint16_t addressLower = memory.readFromMemory(programCounter++),
-             addressHigher = memory.readFromMemory(programCounter++),
-             abs = (addressHigher << 8) | addressLower,
-             effLower = memory.readFromMemory(abs),
-             effHigher = memory.readFromMemory((abs & 0xFF00) + ((abs + 1) & 0x00FF));
-    
-    return effLower + 0x100 * effHigher;
-}
-
-
-//ZERO PAGE X
-ADDRESS CPU::ZEX()
-{
-    return (memory.readFromMemory(programCounter++) + X) % 256;
-}
-
-
-//ZERO PAGE Y
-ADDRESS CPU::ZEY()
-{
-    return (memory.readFromMemory(programCounter++) + Y) % 256;
-}
-
-
-//INDEXED X 
-ADDRESS CPU::ABX()
-{
-    return ABS() + X;
-}
-
-
-//INDEXED Y 
-ADDRESS CPU::ABY()
-{
-    return ABS() + Y;
-}
-
-
-//INDEXED X INDIRECT
-ADDRESS CPU::INX()
-{
-    uint16_t zeroLower = ZEX(),zeroHigher = (zeroLower + 1) % 256;
-    return memory.readFromMemory(zeroLower) + (memory.readFromMemory(zeroHigher) << 8);
-}
-
-
-//INDEXED Y INDIRECT
-ADDRESS CPU::INY()
-{
-    uint16_t zeroLower = memory.readFromMemory(programCounter++),
-             zeroHigher = (zeroLower + 1) % 256;
-    return memory.readFromMemory(zeroLower) + (memory.readFromMemory(zeroHigher) << 8) + Y;
-}
 
 void CPU::reset()
 {
@@ -1040,7 +938,7 @@ CPU::OPEXEC CPU::INC(ADDRESS source)
 	memory.writeToMemory(source,data);
 }
 
-CPU::OPEXEC CPU::INX(ADDRESS source)
+CPU::OPEXEC CPU::INX_OP(ADDRESS source)
 {
 	X = (X + 1) % 256;
 	ZERO = !X;

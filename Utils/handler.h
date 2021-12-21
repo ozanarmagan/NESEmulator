@@ -36,7 +36,9 @@ struct FileHeader  // iNES File Header
 struct PIXEL
 {
     BYTE r,g,b;
-}
+};
+
+
 
 
 #endif

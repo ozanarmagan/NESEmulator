@@ -1,35 +1,36 @@
 #ifndef CARTRIDGE_H
-#define CARTRIDE_H
+#define CARTRIDGE_H
 
 #include <iostream>
 #include <vector>
-#include "../CPU/CPU.h"
-#include "../PPU/PPU.h"
 #include "../Utils/handler.h"
-#include "../Bus/Bus.h"
-#include "../Bus/PPUBus.h"
+
+
 
 class Cartridge 
 {
     public:
-        Cartridge(const std::string fileName);
-        void setCPU(CPU *cpu) {cpu = cpu; };
-        void setPPU(PPU *ppu) {ppu = ppu; };
-        BYTE getPRGnum() { return PRGnum; };
-        BYTE getCHRnum() { return CHRnum; };
-        BYTE getPRGdata(ADDRESS address);
-        BYTE getCHRdata(ADDRESS address);
-        void setPGRdata(ADDRESS address,BYTE value);
-        void setCHRdata(ADDRESS address,BYTE value);
-    private:
-        CPU *cpu;
-        PPU *ppu;
+        Cartridge();
+        BYTE getPRGNum() { return PRGNum; };
+        BYTE getCHRNum() { return CHRNum; };
+        BYTE getPRGData(ADDRESS address) { return PRGmemory[address]; };
+        BYTE getCHRData(ADDRESS address) { return CHRmemory[address]; };
+        BYTE getMapperID() { return mapperID; };
+        void setPRGData(ADDRESS address,BYTE value) { PRGmemory[address] = value; };
+        void setCHRData(ADDRESS address,BYTE value) { CHRmemory[address] = value; };
+        void setMapperID(int ID) { mapperID = ID; };
+        void loadPRGData(BYTE* PRGHead) { PRGmemory = PRGHead; };
+        void loadCHRData(BYTE* CHRHead) { CHRmemory = CHRHead; };
+        void setPRGNum(BYTE _PRGNum) { PRGNum = _PRGNum;};
+        void setCHRNum(BYTE _CHRNum) { CHRNum = _CHRNum;};
+        friend std::ostream& operator<<(std::ostream& stream,Cartridge& cart);
+    private:    
         BYTE* PRGmemory;
         BYTE* CHRmemory;
 
-        BYTE mapperID = 0;
-        BYTE PRGnum = 0;
-        BYTE CHRnum = 0;
+        BYTE mapperID;
+        BYTE PRGNum;
+        BYTE CHRNum;
 };
 
 #endif

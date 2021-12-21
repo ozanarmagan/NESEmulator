@@ -12,14 +12,14 @@
 class MapperBase
 {
     public:
-        MapperBase(BYTE PRGnum,BYTE CHRnum) : PRGnum(PRGnum),CHRnum(CHRnum) {    };
+        MapperBase(BYTE PRGNum,BYTE CHRNum): PRGNum(PRGNum),CHRNum(CHRNum) {    };
         virtual BYTE MapReadCpu(ADDRESS address) = 0;
         virtual void MapWriteCpu(ADDRESS address,BYTE value) = 0;
         virtual BYTE MapReadPpu(ADDRESS address) = 0;
         virtual void MapWritePpu(ADDRESS address,BYTE value) = 0;
         void setCartridge(Cartridge *cart) { cartridge = cart; };
     protected:
-        BYTE PRGnum,CHRnum;
+        BYTE PRGNum,CHRNum;
         Cartridge *cartridge;
 };
 

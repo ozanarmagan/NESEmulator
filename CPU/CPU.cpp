@@ -4,7 +4,21 @@
 #include <iomanip>
 using namespace std;
 
-CPU::CPU(Bus* mem,PPU* ppu) : bus(mem),ppu(ppu) { 
+
+namespace{
+	std::string bTohex(uint32_t n, uint8_t d)
+	{
+		std::string s(d, '0');
+		for (int i = d - 1; i >= 0; i--, n >>= 4)
+			s[i] = "0123456789ABCDEF"[n & 0xF];
+		return s;
+	};
+}
+
+
+CPU::CPU(Bus& mem,PPU& ppu) : bus(mem),ppu(ppu) { 
+
+	programCounter = 0;
 
     // Fill with ILLEGAL for empty OPCODES 
     INSTRUCTION temp; 
@@ -686,33 +700,33 @@ void CPU::reset()
     SP = 0xFF;
 }
 
-void CPU::push(uint8_t value)
+void CPU::push(BYTE value)
 {
-    bus->writeToMemory(0x0100 + SP,value);
+    bus.writeToMemory(0x0100 + SP,value);
     if(SP == 0x00) SP = 0xFF;
     else SP--;
 }
 
-uint8_t CPU::pop()
+BYTE CPU::pop()
 {
     if(SP = 0xFF) SP == 0x00;
     else SP++;
-    return bus->readFromMemory(0x0100 + SP);
+    return bus.readFromMemory(0x0100 + SP);
 }
 
 void CPU::tick()
 {
-	currentOpCode = bus->readFromMemory(programCounter++); // Fetch
+	currentOpCode = bus.readFromMemory(programCounter++); // Fetch
 
-	ppu->tick();
-	ppu->tick();
-	ppu->tick();	
+	ppu.tick();
+	ppu.tick();
+	ppu.tick();	
 
 	currentInstruction = table[currentOpCode]; // Decode 
 
-	ppu->tick();
-	ppu->tick();
-	ppu->tick();	
+	ppu.tick();
+	ppu.tick();
+	ppu.tick();	
 
 	currentCycle += currentInstruction.cycles;
 
@@ -722,9 +736,9 @@ void CPU::tick()
 
 void CPU::execute()
 {
-	ppu->tick();
-	ppu->tick();
-	ppu->tick();
+	ppu.tick();
+	ppu.tick();
+	ppu.tick();
 	
 	(this->*currentInstruction.operation)((this->*currentInstruction.addr)());
 }
@@ -732,8 +746,8 @@ void CPU::execute()
 std::ostream& operator<<(std::ostream &out,CPU &cpu)
 {
 	out << "REGISTERS: " << std::endl;
-	out << "A: " << std::hex << std::setfill('0') << std::setw(2)  << cpu.A << std::endl <<  "B: " << std::endl << "X: " << cpu.X << std::endl << "Y: " << std::endl << "SP: " << cpu.SP << std::endl;
-	out << "PROGBus COUNTER: " << std::hex << std::setfill('0') << std::setw(2) << cpu.programCounter << std::endl;
+	out << "A: " << bTohex(cpu.A,2) << std::endl << "X: " << bTohex(cpu.X,2) << std::endl << "Y: " << bTohex(cpu.Y,2) << std::endl << "SP: " << bTohex(cpu.SP,2) << std::endl;
+	out << "PROGRAM COUNTER: " << bTohex(cpu.programCounter,2) << std::endl;
 
 	return out;
 }

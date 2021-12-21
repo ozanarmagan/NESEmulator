@@ -7,7 +7,7 @@
 class Mapper0 : public MapperBase
 {
     public:
-        Mapper0();
+        Mapper0(BYTE PRGNum,BYTE CHRNum);
         BYTE MapReadCpu(ADDRESS address) override;
         void MapWriteCpu(ADDRESS address,BYTE value) override;
         BYTE MapReadPpu(ADDRESS address) override;

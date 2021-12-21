@@ -68,3 +68,9 @@ PPUBus::PPUBus()
 	colors[0x3E] = {0, 0, 0};
 	colors[0x3F] = {0, 0, 0};
 }
+
+
+void PPUBus::setMapper(std::shared_ptr<MapperBase> mapper)
+{
+	mapper = mapper;
+}

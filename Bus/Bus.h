@@ -16,7 +16,7 @@ class Bus
         void writeToMemory(ADDRESS address,BYTE value);
         void clearMemoryBlock(ADDRESS start,ADDRESS end);
         void setMapper(std::shared_ptr<MapperBase> _mapper) { mapper = _mapper; }; // not implemented yet
-        BYTE* getControllerMemory() { return controllerCache; };
+        void setControllerMemory(BYTE controllers[2]) { controllerCache[0] = controllers[0]; controllerCache[1] = controllerCache[1]; };
         void print(int end = 20);
     private:
         BYTE memory[2048]; // CPU RAM

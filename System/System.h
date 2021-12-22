@@ -31,7 +31,6 @@ class NES
         void setMapper();
         void mainLoop();
         void tick();
-        void updateControllers();
         uint64_t clock = 0;
         SDL_Event events;
         Controller controller;

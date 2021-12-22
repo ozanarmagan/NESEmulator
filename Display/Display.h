@@ -2,6 +2,7 @@
 #define DISPLAY_H
 #define SDL_MAIN_HANDLED
 #include "../Utils/handler.h"
+#include "../Controller/Controller.h"
 #include <SDL2/SDL.h>
 
 #define DEBUG
@@ -9,7 +10,7 @@
 class Display
 {
     public:
-        Display(SDL_Event* event);
+        Display(SDL_Event* event,Controller& controller);
         void init();
         void initDebug();
         void setPixel(int x, int y, PIXEL_RGB pixelColors);
@@ -29,6 +30,7 @@ class Display
         SDL_Renderer *Drenderer;
         SDL_Texture *Dtexture;
         SDL_Event *eventPtr;
+        Controller& controller;
 };
 
 #endif

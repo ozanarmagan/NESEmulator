@@ -3,7 +3,7 @@
 
 
 
-Display::Display(SDL_Event* event) : eventPtr(event)
+Display::Display(SDL_Event* event,Controller& controller) : eventPtr(event),controller(controller)
 {
     if(SDL_Init(SDL_INIT_EVERYTHING) < 0)
         std::cout << "ERROR: SDL Couldn't initialized!\n";
@@ -58,7 +58,24 @@ void Display::renderFrame()
     SDL_RenderCopy(renderer, texture, NULL, NULL);
     SDL_RenderPresent(renderer);
 
-    SDL_PollEvent(eventPtr);
+    while(SDL_PollEvent(eventPtr))
+    {
+        switch (eventPtr->type)
+            {
+            case SDL_QUIT:
+                std::cout << "LOG: Quit has called! Good bye!\n";
+                exit(1);
+                break;
+            case SDL_KEYDOWN:
+                controller.setKeyStatus(eventPtr->key.keysym.scancode);
+                break;
+            case SDL_KEYUP:
+                controller.clearKeyStatus(eventPtr->key.keysym.scancode);
+                break;
+            default:
+                break;
+            }
+    }
     SDL_Delay(1000/60);
 }
 
@@ -92,7 +109,21 @@ void Display::renderDebugFrame()
     SDL_RenderCopy(Drenderer, Dtexture, NULL, NULL);
     SDL_RenderPresent(Drenderer);
 
-    SDL_PollEvent(eventPtr);
+    while(SDL_PollEvent(eventPtr))
+    {
+        switch (eventPtr->type)
+            {
+            case SDL_KEYDOWN:
+                controller.setKeyStatus(eventPtr->key.keysym.sym);
+                break;
+            case SDL_KEYUP:
+                controller.clearKeyStatus(eventPtr->key.keysym.sym);
+                break;
+            default:
+                break;
+            }
+    }
+
     SDL_Delay(1000/60);
 }
 #endif

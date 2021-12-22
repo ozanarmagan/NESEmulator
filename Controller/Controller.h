@@ -9,14 +9,14 @@
 class Controller
 {
     public: 
-        Controller(Bus& bus);
+        Controller(Bus* bus);
         void setKeyStatus(int index) { keys[index] = true; };
         void clearKeyStatus(int index) { keys[index] = false; };
         bool getKeyStatus(int index) { return keys[index]; };
         void handleInput();
     private:
-        bool keys[322]; //SDL Keys
-        Bus& bus;
+        bool keys[512]; //SDL Keys
+        Bus* bus;
 };
 
 

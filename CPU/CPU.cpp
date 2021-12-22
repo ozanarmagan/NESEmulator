@@ -25,7 +25,7 @@ CPU::CPU(Bus& mem,PPU& ppu) : bus(mem),ppu(ppu) {
     temp.operation = &CPU::ILLEGAL;
     temp.addr = &CPU::IMP;
     temp.cycles = 0;
-    for(int i;i < 256;i++)
+    for(int i = 0;i < 256;i++)
         table[i] = temp;
     
     // Fill table now
@@ -716,30 +716,25 @@ BYTE CPU::pop()
 
 void CPU::tick()
 {
-	currentOpCode = bus.readFromMemory(programCounter++); // Fetch
+	if(currentCycle == 0)
+	{
+		currentOpCode = bus.readFromMemory(programCounter++); // Fetch
 
-	ppu.tick();
-	ppu.tick();
-	ppu.tick();	
+		currentInstruction = table[currentOpCode]; // Decode 
 
-	currentInstruction = table[currentOpCode]; // Decode 
+		currentCycle += currentInstruction.cycles;
 
-	ppu.tick();
-	ppu.tick();
-	ppu.tick();	
+		execute(); // Execute
+	}
 
-	currentCycle += currentInstruction.cycles;
-
-	execute(); // Execute
+	if(currentCycle > 0)
+		currentCycle--;
 }
 
 
 void CPU::execute()
 {
-	ppu.tick();
-	ppu.tick();
-	ppu.tick();
-	
+
 	(this->*currentInstruction.operation)((this->*currentInstruction.addr)());
 }
 
@@ -747,7 +742,7 @@ std::ostream& operator<<(std::ostream &out,CPU &cpu)
 {
 	out << "REGISTERS: " << std::endl;
 	out << "A: " << bTohex(cpu.A,2) << std::endl << "X: " << bTohex(cpu.X,2) << std::endl << "Y: " << bTohex(cpu.Y,2) << std::endl << "SP: " << bTohex(cpu.SP,2) << std::endl;
-	out << "PROGRAM COUNTER: " << bTohex(cpu.programCounter,2) << std::endl;
+	out << "PROGRAM COUNTER: " << bTohex(cpu.programCounter,4) << std::endl;
 
 	return out;
 }

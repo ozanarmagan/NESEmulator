@@ -10,7 +10,6 @@
 class Cartridge 
 {
     public:
-        Cartridge();
         BYTE getPRGNum() { return PRGNum; };
         BYTE getCHRNum() { return CHRNum; };
         BYTE getPRGData(ADDRESS address) { return PRGmemory[address]; };

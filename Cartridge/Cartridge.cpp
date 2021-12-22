@@ -1,12 +1,6 @@
 #include <fstream>
 #include "Cartridge.h"
 
-Cartridge::Cartridge()
-{
- 
-}
-
-
 namespace{
 	std::string bTohex(uint32_t n, uint8_t d)
 	{
@@ -24,16 +18,16 @@ std::ostream& operator<<(std::ostream& stream,Cartridge& cart)
     stream << "PRG ROM : " << std::endl;
     for(int i = 0;i < 256;i++)
     {
-        std::cout << std::hex << bTohex(cart.PRGmemory[i],2) << " ";
-        if(i != 0 && i  % 8 == 0)
+        if(i  % 8 == 0)
             std::cout  << std::endl;
+        std::cout << std::hex << bTohex(cart.PRGmemory[i],2) << " ";
     }
     stream << std::endl << "CHR ROM : " << std::endl;
     for(int i = 0;i < 256;i++)
     {
-        std::cout << std::hex << bTohex(cart.CHRmemory[i],2) << " ";
-        if(i != 0 && i  % 8 == 0)
+        if(i  % 8 == 0)
             std::cout  << std::endl;
+        std::cout << std::hex << bTohex(cart.CHRmemory[i],2) << " ";
     }
     return stream;
 }

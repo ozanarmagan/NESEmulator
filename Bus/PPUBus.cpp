@@ -70,7 +70,7 @@ PPUBus::PPUBus()
 }
 
 
-void PPUBus::setMapper(std::shared_ptr<MapperBase> mapper)
+void PPUBus::setMapper(std::shared_ptr<MapperBase> _mapper)
 {
-	mapper = mapper;
+	mapper = _mapper;
 }

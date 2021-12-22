@@ -16,6 +16,7 @@ namespace{
 
 BYTE Bus::readFromMemory(ADDRESS address) const
 {
+    std::cout << "BUSS";
     if(address >= 0x0000 && address <= 0x1FFF)
         return memory[address & 0x07FF]; // Bitwise and because of mirroring 
     else if(address >= 0x2000 && address <= 0x3FFF)

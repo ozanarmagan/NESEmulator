@@ -12,7 +12,7 @@
 class MapperBase
 {
     public:
-        MapperBase(BYTE PRGNum,BYTE CHRNum): PRGNum(PRGNum),CHRNum(CHRNum) {    };
+        MapperBase(BYTE PRGNum,BYTE CHRNu,Cartridge *cartridge_): PRGNum(PRGNum),CHRNum(CHRNum),cartridge(cartridge_) {    };
         virtual BYTE MapReadCpu(ADDRESS address) = 0;
         virtual void MapWriteCpu(ADDRESS address,BYTE value) = 0;
         virtual BYTE MapReadPpu(ADDRESS address) = 0;

@@ -10,13 +10,20 @@
 #define NEGATIVE_BIT 7
 
 
+
+#define DISPLAY_WIDTH 1024
+#define DISPLAY_HEIGHT 960
+#define RENDER_WIDTH 256
+#define RENDER_HEIGHT 240
+
+
 #include <iostream>
 
 using std::string;
 
 typedef uint8_t BYTE;
 typedef uint16_t ADDRESS;
-typedef uint32_t ADDRESS32;
+typedef uint32_t PIXEL;
 typedef uint8_t FLAG;
 
 struct FileHeader  // iNES File Header
@@ -33,9 +40,13 @@ struct FileHeader  // iNES File Header
 };
 
 
-struct PIXEL
+struct PIXEL_RGB
 {
     BYTE r,g,b;
+};
+
+enum class BUTTONS {
+    UP,DOWN,LEFT,RIGHT,START,SELECT,A,B,COUNT
 };
 
 

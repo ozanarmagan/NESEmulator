@@ -575,7 +575,7 @@ class CPU
 
         const function<OPEXEC(ADDRESS)> ILLEGAL = [this](ADDRESS source)
         {
-            exit(1);
+            
         };
       
         /*------------ADDRESSING MODES--------*/

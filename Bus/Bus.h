@@ -11,11 +11,11 @@
 class Bus
 {
     public:
-        Bus(PPUBus& ppuBus) : ppuBus(ppuBus) {  };
+        Bus(PPUBus& ppuBus) : ppuBus(ppuBus) { };
         BYTE readFromMemory(ADDRESS address) const;
         void writeToMemory(ADDRESS address,BYTE value);
         void clearMemoryBlock(ADDRESS start,ADDRESS end);
-        void setMapper(std::shared_ptr<MapperBase> mapper) { mapper = mapper; }; // not implemented yet
+        void setMapper(std::shared_ptr<MapperBase> _mapper) { mapper = _mapper; }; // not implemented yet
         void print(int end = 20);
     private:
         BYTE memory[2048]; // CPU RAM

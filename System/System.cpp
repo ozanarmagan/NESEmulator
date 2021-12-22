@@ -10,12 +10,13 @@ namespace{
 	};
 }
 
-NES::NES() : cartridge(),ppuBus(),bus(ppuBus),ppu(&bus,&cartridge,&ppuBus),cpu(bus,ppu)
+
+NES::NES() : display(),cartridge(),ppuBus(),bus(ppuBus),ppu(&display,&bus,&cartridge,&ppuBus),cpu(bus,ppu)
 {
 
 }
 
-NES::NES(std::string fileName) : cartridge(),ppuBus(),bus(ppuBus),ppu(&bus,&cartridge,&ppuBus),cpu(bus,ppu)
+NES::NES(std::string fileName) : display(),cartridge(),ppuBus(),bus(ppuBus),ppu(&display,&bus,&cartridge,&ppuBus),cpu(bus,ppu)
 {
     insertNESFile(fileName);   
 }
@@ -66,7 +67,7 @@ void NES::setMapper()
 {
     switch (cartridge.getMapperID())
     {
-    case 0:mapper = std::make_shared<Mapper0>(cartridge.getPRGNum(), cartridge.getCHRNum());break;   
+    case 0:mapper = std::make_shared<Mapper0>(cartridge.getPRGNum(), cartridge.getCHRNum(),&cartridge);break;   
     default:
         break;
     }
@@ -79,4 +80,37 @@ void NES::log()
     std::cout << cpu;
     bus.print();
     std::cout << cartridge;
+}
+
+
+void NES::start()
+{
+    std::cout << "\nLOG: " << "Main Loop Has Started!\n";
+
+    mainLoop();
+}
+
+
+void NES::mainLoop()
+{
+    while(1)
+    {
+        tick();
+        if(ppu.isFrameDone())
+        {
+            display.renderFrame();
+            ppu.clearFrameDone();
+        }
+    }
+}
+
+
+void NES::tick()
+{
+    ppu.tick();
+
+    if(clock++ % 3 == 0)
+        cpu.tick();
+    system("cls");
+    std::cout << cpu;
 }

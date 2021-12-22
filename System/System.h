@@ -1,4 +1,5 @@
 #include <fstream>
+#include <thread>
 
 #include "../Utils/handler.h"
 #include "../Cartridge/Cartridge.h"
@@ -7,6 +8,7 @@
 #include "../Bus/PPUBus.h"
 #include "../PPU/PPU.h"
 #include "../CPU/CPU.h"
+#include "../Display/Display.h"
 
 
 class NES
@@ -25,5 +27,9 @@ class NES
         Bus bus;
         PPU ppu;
         CPU cpu;    
+        Display display;
         void setMapper();
+        void mainLoop();
+        void tick();
+        uint64_t clock = 0;
 };

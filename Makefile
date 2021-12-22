@@ -3,7 +3,7 @@ CCXXFLAGS =  -lSDL2 -lSDL2main
 
 SRC = $(wildcard */*.cpp) *.cpp 
 OBJ = $(SRC:.cc=.o)
-EXEC = test.out
+EXEC = test.exe
 
 all: $(EXEC) 
 

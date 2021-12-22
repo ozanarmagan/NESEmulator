@@ -14,13 +14,19 @@ namespace{
 	};
 }
 
-BYTE Bus::readFromMemory(ADDRESS address) const
+BYTE Bus::readFromMemory(ADDRESS address)
 {
-    std::cout << "BUSS";
     if(address >= 0x0000 && address <= 0x1FFF)
         return memory[address & 0x07FF]; // Bitwise and because of mirroring 
     else if(address >= 0x2000 && address <= 0x3FFF)
         return ppuBus.readFromMemory(address & 0x0007); // Same for PPU
+    else if(address >= 0x4016 && address <= 0x4017)
+    {
+        BYTE data =  (controllerMemory[address & 0x0001] & 0x80) > 0;
+        address &= 0x0001;
+        controllerMemory[address] <<= 1;
+        return data;
+    }
     else if(address >= 0x6000 && address <= 0xFFFF)
         return mapper->MapReadCpu(address);
     else
@@ -33,6 +39,8 @@ void Bus::writeToMemory(ADDRESS address,BYTE value)
         memory[address & 0x07FF] = value;
     else if(address >= 0x2000 && address <= 0x3FFF)
         ppuBus.writeToMemory(address & 0x0007,value);
+    else if(address >= 0x4016 && address <= 0x4017)
+        controllerMemory[address & 0x0001] = controllerCache[address & 0x0001];
     else if(address >= 0x6000 && address <= 0xFFFF)
         mapper->MapWriteCpu(address,value);
 }

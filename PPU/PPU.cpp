@@ -3,20 +3,29 @@
 
 void PPU::tick()
 {
-    if(row < 240 && line < 256)
-        display->setPixel(line,row,{155,155,155});
+    if(row < 240 && line < 256 && line > -1)
+        display->setPixel(line,row,{155,0,155});
     else if(row > 240)
         VBLANK = true;
-    line++;
-    if(line >= 341)
+    if(++line >= 341)
     {
         line = 0;
-        row++;
-        if(row >= 261)
+        if(row++ >= 261)
         {
             frameDone = true;
-            row = -1;
+            row = 0;
             VBLANK = false;
         }
     }
 }
+
+
+std::ostream& operator<<(std::ostream &out,PPU &ppu)
+{
+    out << std::dec;
+    out << "\nPPU LINE : " << ppu.line <<" ROW : " << ppu.row;
+    out << std::endl;
+
+    return out;
+}
+

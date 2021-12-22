@@ -10,6 +10,7 @@
 class Cartridge 
 {
     public:
+        ~Cartridge() { delete [] PRGmemory; delete [] CHRmemory; };
         BYTE getPRGNum() { return PRGNum; };
         BYTE getCHRNum() { return CHRNum; };
         BYTE getPRGData(ADDRESS address) { return PRGmemory[address]; };

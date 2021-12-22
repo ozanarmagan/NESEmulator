@@ -15,6 +15,8 @@
 #define DISPLAY_HEIGHT 960
 #define RENDER_WIDTH 256
 #define RENDER_HEIGHT 240
+#define DEBUG_WIDTH 256
+#define DEBUG_HEIGHT 256
 
 
 #include <iostream>

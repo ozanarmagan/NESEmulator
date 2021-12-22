@@ -16,13 +16,14 @@ class PPU
         void tick();
         const bool inline isFrameDone() { return frameDone; };
         void clearFrameDone() { frameDone = false; };
+        friend std::ostream& operator<<(std::ostream &out,PPU &ppu); // For logging stuff
         friend class PPUBus;
     private:
         Bus* mainBus;
         Cartridge* cartridge;
         PPUBus* ppuBus;
         Display* display;
-        ADDRESS line = 0,row = 0;
+        int line = 0,row = 0;
         bool frameDone = false;
         bool VBLANK = false;
 };

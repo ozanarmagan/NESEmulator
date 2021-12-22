@@ -12,13 +12,16 @@ class Bus
 {
     public:
         Bus(PPUBus& ppuBus) : ppuBus(ppuBus) { };
-        BYTE readFromMemory(ADDRESS address) const;
+        BYTE readFromMemory(ADDRESS address);
         void writeToMemory(ADDRESS address,BYTE value);
         void clearMemoryBlock(ADDRESS start,ADDRESS end);
         void setMapper(std::shared_ptr<MapperBase> _mapper) { mapper = _mapper; }; // not implemented yet
+        BYTE* getControllerMemory() { return controllerCache; };
         void print(int end = 20);
     private:
         BYTE memory[2048]; // CPU RAM
+        BYTE controllerCache[2]; // Temporary cache to write in every frame
+        BYTE controllerMemory[2]; // Bytes for controllers
         PPUBus& ppuBus; 
         std::shared_ptr<MapperBase> mapper;
 

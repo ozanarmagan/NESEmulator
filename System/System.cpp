@@ -11,12 +11,12 @@ namespace{
 }
 
 
-NES::NES() : display(),cartridge(),ppuBus(),bus(ppuBus),ppu(&display,&bus,&cartridge,&ppuBus),cpu(bus,ppu)
+NES::NES() : display(&events),cartridge(),ppuBus(),bus(ppuBus),ppu(&display,&bus,&cartridge,&ppuBus),cpu(bus,ppu),controller(bus)
 {
 
 }
 
-NES::NES(std::string fileName) : display(),cartridge(),ppuBus(),bus(ppuBus),ppu(&display,&bus,&cartridge,&ppuBus),cpu(bus,ppu)
+NES::NES(std::string fileName) : display(&events),cartridge(),ppuBus(),bus(ppuBus),ppu(&display,&bus,&cartridge,&ppuBus),cpu(bus,ppu),controller(bus)
 {
     insertNESFile(fileName);   
 }
@@ -95,12 +95,13 @@ void NES::mainLoop()
 {
     while(1)
     {
-        tick();
-        if(ppu.isFrameDone())
-        {
-            display.renderFrame();
-            ppu.clearFrameDone();
-        }
+        while(!ppu.isFrameDone())
+            tick();
+        display.renderFrame();
+#ifdef DEBUG
+        display.renderDebugFrame();
+#endif
+        ppu.clearFrameDone();
     }
 }
 
@@ -108,9 +109,33 @@ void NES::mainLoop()
 void NES::tick()
 {
     ppu.tick();
-
+    updateControllers();
+    controller.handleInput();
     if(clock++ % 3 == 0)
         cpu.tick();
-    system("cls");
-    std::cout << cpu;
 }
+
+
+void NES::updateControllers()
+{
+    while(SDL_PollEvent(&events))
+    {
+        switch (events.type)
+        {
+        case SDL_QUIT:
+            std::cout << "LOG: Quit has called! Good bye!\n";
+            delete this;
+            break;
+        case SDL_KEYDOWN:
+            controller.setKeyStatus(events.key.keysym.sym);
+            break;
+        case SDL_KEYUP:
+            controller.clearKeyStatus(events.key.keysym.sym);
+            break;
+        default:
+            break;
+        }
+    }
+}
+
+

@@ -1,7 +1,7 @@
 #ifndef CPU_H
 #define CPU_H
 
-
+#define CPUDEBUG
 
 #include <functional>
 
@@ -29,7 +29,7 @@ class CPU
     private:
 
 #ifdef CPUDEBUG
-        void log();
+        void logToFile();
         FILE* logFile;
 #endif
 
@@ -231,6 +231,8 @@ class CPU
         ADDRESS INY(); // INDEXED-Y INDIRECT
 
         ADDRESS ABI(); // ABSOLUTE INDIRECT
+
+
 
 };
 

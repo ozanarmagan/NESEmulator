@@ -504,128 +504,8 @@ void CPU::tick()
 	if(cycleRemaining == 0)
 	{
 #ifdef CPUDEBUG
-		std::string op = "";
-		if(currentInstruction.operation == &CPU::AND)
-			op = "AND";
-		else if(currentInstruction.operation == &CPU::ADC)
-			op = "ADC";
-		else if(currentInstruction.operation == &CPU::ASL)
-			op = "ASL";
-		else if(currentInstruction.operation == &CPU::BCC)
-			op = "BCC";
-		else if(currentInstruction.operation == &CPU::BCS)
-			op = "BCS";
-		else if(currentInstruction.operation == &CPU::BEQ)
-			op = "BEQ";
-		else if(currentInstruction.operation == &CPU::BIT)
-			op = "BIT";
-		else if(currentInstruction.operation == &CPU::BMI)
-			op = "BMI";
-		else if(currentInstruction.operation == &CPU::BNE)
-			op = "BNE";
-		else if(currentInstruction.operation == &CPU::BPL)
-			op = "BPL";
-		else if(currentInstruction.operation == &CPU::BRK)
-			op = "BRK";
-		else if(currentInstruction.operation == &CPU::BVC)
-			op = "BC";
-		else if(currentInstruction.operation == &CPU::BVS)
-			op = "BVS";
-		else if(currentInstruction.operation == &CPU::CLC)
-			op = "CLC";
-		else if(currentInstruction.operation == &CPU::CLD)
-			op = "CLD";
-		else if(currentInstruction.operation == &CPU::CLI)
-			op = "CLI";
-		else if(currentInstruction.operation == &CPU::CLV)
-			op = "CLV";
-		else if(currentInstruction.operation == &CPU::CMP)
-			op = "CMP";
-		else if(currentInstruction.operation == &CPU::CPX)
-			op = "CPX";
-		else if(currentInstruction.operation == &CPU::CPY)
-			op = "CPY";
-		else if(currentInstruction.operation == &CPU::DEC)
-			op = "DEC";
-		else if(currentInstruction.operation == &CPU::DEX)
-			op = "DEX";
-		else if(currentInstruction.operation == &CPU::DEY)
-			op = "DEY";
-		else if(currentInstruction.operation == &CPU::EOR)
-			op = "EOR";
-		else if(currentInstruction.operation == &CPU::ILLEGAL)
-			op = "ILLEGAL";
-		else if(currentInstruction.operation == &CPU::INC)
-			op = "INC";
-		else if(currentInstruction.operation == &CPU::INX_OP)
-			op = "INX";
-		else if(currentInstruction.operation == &CPU::INY_OP)
-			op = "INY";
-		else if(currentInstruction.operation == &CPU::JMP)
-			op = "JMP";
-		else if(currentInstruction.operation == &CPU::JSR)
-			op = "JSR";
-		else if(currentInstruction.operation == &CPU::LDA)
-			op = "LDA";
-		else if(currentInstruction.operation == &CPU::LDX)
-			op = "LDX";
-		else if(currentInstruction.operation == &CPU::LDY)
-			op = "LDY";
-		else if(currentInstruction.operation == &CPU::LSR)
-			op = "LSR";
-		else if(currentInstruction.operation == &CPU::NOP)
-			op = "NOP";
-		else if(currentInstruction.operation == &CPU::ORA)
-			op = "ORA";
-		else if(currentInstruction.operation == &CPU::PHA)
-			op = "PHA";
-		else if(currentInstruction.operation == &CPU::PHP)
-			op = "PHP";
-		else if(currentInstruction.operation == &CPU::PLA)
-			op = "PLA";
-		else if(currentInstruction.operation == &CPU::PLP)
-			op = "PLP";
-		else if(currentInstruction.operation == &CPU::ROL)
-			op = "ROL";
-		else if(currentInstruction.operation == &CPU::ROR)
-			op = "ROR";
-		else if(currentInstruction.operation == &CPU::RTI)
-			op = "RTI";
-		else if(currentInstruction.operation == &CPU::RTS)
-			op = "RTS";
-		else if(currentInstruction.operation == &CPU::SBC)
-			op = "SBC";
-		else if(currentInstruction.operation == &CPU::SEC)
-			op = "SEC";
-		else if(currentInstruction.operation == &CPU::SED)
-			op = "SED";
-		else if(currentInstruction.operation == &CPU::SEI)
-			op = "SEI";
-		else if(currentInstruction.operation == &CPU::STA)
-			op = "STA";
-		else if(currentInstruction.operation == &CPU::STX)
-			op = "STX";
-		else if(currentInstruction.operation == &CPU::STY)
-			op = "STY";
-		else if(currentInstruction.operation == &CPU::TAX)
-			op = "TAX";
-		else if(currentInstruction.operation == &CPU::TAY)
-			op = "TAY";
-		else if(currentInstruction.operation == &CPU::TSX)
-			op = "TSX";
-		else if(currentInstruction.operation == &CPU::TXA)
-			op = "TXA";
-		else if(currentInstruction.operation == &CPU::TXS)
-			op = "TXS";
-		else if(currentInstruction.operation == &CPU::TYA)
-			op = "TYA";
-		fprintf(logFile,"PC:%04X  A:%02X  X:%02X  Y:%02X  %d%d%d%d%d%d%d%d  SP:%02X OP:%-3s $:%04X\n",programCounter,A,X,Y,STATUS.CARRY,STATUS.ZERO,STATUS.INTERRUPT,STATUS.DECIMAL,STATUS.BREAK,STATUS.UNUSED,STATUS.OVERFLOW,STATUS.NEGATIVE,SP,op.c_str(),source);
-		
-
+		logToFile();
 #endif
-
-		if (programCounter == 0x9C8C)
- 			std::cout << "hgh";
 
 		currentOpCode = bus.readFromMemory(programCounter++); // Fetch
 
@@ -1286,12 +1166,124 @@ CPU::OPEXEC CPU::ILLEGAL(ADDRESS source)
 
 #ifdef CPUDEBUG
 
-void CPU::log()
+void CPU::logToFile()
 {
-	
-	
-	fprintf(logFile,"PC:%04X  A:%02X  X:%02X  Y:%02X  %d%d%d%d%d%d%d%d  SP:%02X \n",programCounter,A,X,Y,STATUS.CARRY,STATUS.ZERO,STATUS.INTERRUPT,STATUS.DECIMAL,STATUS.BREAK,STATUS.UNUSED,STATUS.OVERFLOW,STATUS.NEGATIVE,SP);
-
+		std::string op = "";
+		if(currentInstruction.operation == &CPU::AND)
+			op = "AND";
+		else if(currentInstruction.operation == &CPU::ADC)
+			op = "ADC";
+		else if(currentInstruction.operation == &CPU::ASL)
+			op = "ASL";
+		else if(currentInstruction.operation == &CPU::BCC)
+			op = "BCC";
+		else if(currentInstruction.operation == &CPU::BCS)
+			op = "BCS";
+		else if(currentInstruction.operation == &CPU::BEQ)
+			op = "BEQ";
+		else if(currentInstruction.operation == &CPU::BIT)
+			op = "BIT";
+		else if(currentInstruction.operation == &CPU::BMI)
+			op = "BMI";
+		else if(currentInstruction.operation == &CPU::BNE)
+			op = "BNE";
+		else if(currentInstruction.operation == &CPU::BPL)
+			op = "BPL";
+		else if(currentInstruction.operation == &CPU::BRK)
+			op = "BRK";
+		else if(currentInstruction.operation == &CPU::BVC)
+			op = "BC";
+		else if(currentInstruction.operation == &CPU::BVS)
+			op = "BVS";
+		else if(currentInstruction.operation == &CPU::CLC)
+			op = "CLC";
+		else if(currentInstruction.operation == &CPU::CLD)
+			op = "CLD";
+		else if(currentInstruction.operation == &CPU::CLI)
+			op = "CLI";
+		else if(currentInstruction.operation == &CPU::CLV)
+			op = "CLV";
+		else if(currentInstruction.operation == &CPU::CMP)
+			op = "CMP";
+		else if(currentInstruction.operation == &CPU::CPX)
+			op = "CPX";
+		else if(currentInstruction.operation == &CPU::CPY)
+			op = "CPY";
+		else if(currentInstruction.operation == &CPU::DEC)
+			op = "DEC";
+		else if(currentInstruction.operation == &CPU::DEX)
+			op = "DEX";
+		else if(currentInstruction.operation == &CPU::DEY)
+			op = "DEY";
+		else if(currentInstruction.operation == &CPU::EOR)
+			op = "EOR";
+		else if(currentInstruction.operation == &CPU::ILLEGAL)
+			op = "ILLEGAL";
+		else if(currentInstruction.operation == &CPU::INC)
+			op = "INC";
+		else if(currentInstruction.operation == &CPU::INX_OP)
+			op = "INX";
+		else if(currentInstruction.operation == &CPU::INY_OP)
+			op = "INY";
+		else if(currentInstruction.operation == &CPU::JMP)
+			op = "JMP";
+		else if(currentInstruction.operation == &CPU::JSR)
+			op = "JSR";
+		else if(currentInstruction.operation == &CPU::LDA)
+			op = "LDA";
+		else if(currentInstruction.operation == &CPU::LDX)
+			op = "LDX";
+		else if(currentInstruction.operation == &CPU::LDY)
+			op = "LDY";
+		else if(currentInstruction.operation == &CPU::LSR)
+			op = "LSR";
+		else if(currentInstruction.operation == &CPU::NOP)
+			op = "NOP";
+		else if(currentInstruction.operation == &CPU::ORA)
+			op = "ORA";
+		else if(currentInstruction.operation == &CPU::PHA)
+			op = "PHA";
+		else if(currentInstruction.operation == &CPU::PHP)
+			op = "PHP";
+		else if(currentInstruction.operation == &CPU::PLA)
+			op = "PLA";
+		else if(currentInstruction.operation == &CPU::PLP)
+			op = "PLP";
+		else if(currentInstruction.operation == &CPU::ROL)
+			op = "ROL";
+		else if(currentInstruction.operation == &CPU::ROR)
+			op = "ROR";
+		else if(currentInstruction.operation == &CPU::RTI)
+			op = "RTI";
+		else if(currentInstruction.operation == &CPU::RTS)
+			op = "RTS";
+		else if(currentInstruction.operation == &CPU::SBC)
+			op = "SBC";
+		else if(currentInstruction.operation == &CPU::SEC)
+			op = "SEC";
+		else if(currentInstruction.operation == &CPU::SED)
+			op = "SED";
+		else if(currentInstruction.operation == &CPU::SEI)
+			op = "SEI";
+		else if(currentInstruction.operation == &CPU::STA)
+			op = "STA";
+		else if(currentInstruction.operation == &CPU::STX)
+			op = "STX";
+		else if(currentInstruction.operation == &CPU::STY)
+			op = "STY";
+		else if(currentInstruction.operation == &CPU::TAX)
+			op = "TAX";
+		else if(currentInstruction.operation == &CPU::TAY)
+			op = "TAY";
+		else if(currentInstruction.operation == &CPU::TSX)
+			op = "TSX";
+		else if(currentInstruction.operation == &CPU::TXA)
+			op = "TXA";
+		else if(currentInstruction.operation == &CPU::TXS)
+			op = "TXS";
+		else if(currentInstruction.operation == &CPU::TYA)
+			op = "TYA";
+		fprintf(logFile,"PC:%04X  A:%02X  X:%02X  Y:%02X  %d%d%d%d%d%d%d%d  SP:%02X OP:%-3s $:%04X\n",programCounter,A,X,Y,STATUS.CARRY,STATUS.ZERO,STATUS.INTERRUPT,STATUS.DECIMAL,STATUS.BREAK,STATUS.UNUSED,STATUS.OVERFLOW,STATUS.NEGATIVE,SP,op.c_str(),source);
 }
 
 

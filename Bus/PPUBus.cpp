@@ -74,3 +74,122 @@ void PPUBus::setMapper(std::shared_ptr<MapperBase> _mapper)
 {
 	mapper = _mapper;
 }
+
+
+BYTE PPUBus::readFromMemory(ADDRESS address)
+{
+	if(address >= 0x0000 && address <= 0x1FFF)
+		return mapper->MapReadPpu(address);
+	else if(address >= 0x2000 && address <= 0x3EFF)
+	{return 0x00;}
+	else if(address >= 0x3F00 && address <= 0x3FFF)
+	{
+		address &= 0x001F;
+		if(address == 0x0010) address = 0x0000;
+		if(address == 0x0014) address = 0x0004;
+		if(address == 0x0018) address = 0x0008;
+		if(address == 0x001C) address = 0x000C;
+		return palettes[address];
+	}
+
+	return 0x00;
+}
+
+
+void PPUBus::writeToMemory(ADDRESS address,BYTE value)
+{
+	if(address >= 0x0000 && address <= 0x1FFF)
+		mapper->MapWritePpu(address,value);
+	else if(address >= 0x2000 && address <= 0x3EFF)
+	{}
+	else if(address >= 0x3F00 && address <= 0x3FFF)
+	{
+		address &= 0x001F;
+		if(address == 0x0010) address = 0x0000;
+		if(address == 0x0014) address = 0x0004;
+		if(address == 0x0018) address = 0x0008;
+		if(address == 0x001C) address = 0x000C;
+		palettes[address] = value;
+	}
+}
+
+
+BYTE PPUBus::readFromMemory_mainBus(ADDRESS address)
+{
+	if(address == 0x0000)
+	{	}
+	else if(address == 0x0001)
+	{	}
+	else if(address == 0x0002)
+	{	
+		BYTE temp =  (PPUSTATUS.combined & 0xE0) | (ppuBuffer & 0x1F);
+
+
+		PPUSTATUS.VBLANK = 0;
+		ppuAddress = 0;
+		return temp;
+	}
+	else if(address == 0x0003)
+	{	}
+	else if(address == 0x0004)
+	{	}
+	else if(address == 0x0005)
+	{	}
+	else if(address == 0x0006)
+	{	}
+	else if(address == 0x0007)
+	{
+		BYTE data = ppuBuffer;
+		ppuBuffer = readFromMemory(ppuAddress);
+
+		if(ppuAddress >= 0x3F00) return ppuBuffer;
+		ppuAddress++;
+		return data;
+	}
+
+
+	return 0x00;
+
+}
+
+
+void PPUBus::writeToMemory_mainBus(ADDRESS address,BYTE value)
+{
+	if(address == 0x0000)
+	{
+		PPUCTRL.combined = value;
+	}
+	else if(address == 0x0001)
+	{
+		PPUMASK.combined = value;
+	}
+	else if(address == 0x0002)
+	{
+		
+	}
+	else if(address == 0x0003)
+	{	}
+	else if(address == 0x0004)
+	{	}
+	else if(address == 0x0005)
+	{	}
+	else if(address == 0x0006)
+	{
+		if(addressToggle == 0)
+		{
+			ppuAddress = (ppuAddress & 0x00FF) | (value << 8);
+			addressToggle = 1;
+		}
+		else
+		{
+			ppuAddress = (ppuAddress & 0xFF00) | value;
+			addressToggle = 0;
+		}
+
+	}
+	else if(address == 0x0007)
+	{
+		writeToMemory(ppuAddress,value);
+		ppuAddress++;
+	}
+}

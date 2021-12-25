@@ -19,7 +19,7 @@ BYTE Bus::readFromMemory(ADDRESS address)
     if(address >= 0x0000 && address <= 0x1FFF)
         return memory[address & 0x07FF]; // Bitwise and because of mirroring 
     else if(address >= 0x2000 && address <= 0x3FFF)
-        return ppuBus.readFromMemory(address & 0x0007); // Same for PPU
+        return ppuBus.readFromMemory_mainBus(address & 0x0007); // Same for PPU
     else if(address >= 0x4016 && address <= 0x4017)
     {
         BYTE data =  (controllerMemory[address & 0x0001] & 0x80) > 0;
@@ -38,7 +38,7 @@ void Bus::writeToMemory(ADDRESS address,BYTE value)
     if(address >= 0x0000 && address <= 0x1FFF)
         memory[address & 0x07FF] = value;
     else if(address >= 0x2000 && address <= 0x3FFF)
-        ppuBus.writeToMemory(address & 0x0007,value);
+        ppuBus.writeToMemory_mainBus(address & 0x0007,value);
     else if(address >= 0x4016 && address <= 0x4017)
         controllerMemory[address & 0x0001] = controllerCache[address & 0x0001];
     else if(address >= 0x6000 && address <= 0xFFFF)

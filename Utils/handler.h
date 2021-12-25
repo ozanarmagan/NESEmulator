@@ -15,10 +15,13 @@
 #define DISPLAY_HEIGHT 960
 #define RENDER_WIDTH 256
 #define RENDER_HEIGHT 240
-#define DEBUG_WIDTH 256
-#define DEBUG_HEIGHT 256
+#define DEBUG_WIDTH 270
+#define DEBUG_HEIGHT 270
 
 
+#define SET_BIT(byte,bit)   ((byte) |=  (1<<(bit)))
+#define CLEAR_BIT(byte,bit) ((byte) &= ~((1)<<(bit)))
+#define CHECK_BIT(byte,bit) ((byte) &   (1<<(bit)))
 #include <iostream>
 
 using std::string;

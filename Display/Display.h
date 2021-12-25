@@ -17,6 +17,7 @@ class Display
         void renderFrame();
 #ifdef DEBUG
         void renderDebugFrame();
+        void setPixelDebug(int x, int y, PIXEL_RGB colors);
 #endif
     private:
         PIXEL pixels[RENDER_WIDTH * RENDER_HEIGHT];

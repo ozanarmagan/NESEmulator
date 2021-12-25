@@ -12,20 +12,25 @@
 class PPU
 {
     public:
-        PPU(Display* display,Bus* mem,Cartridge* cartridge,PPUBus* ppuBus) : display(display),mainBus(mem),cartridge(cartridge),ppuBus(ppuBus) {  };
+        PPU(Display* display,Bus* mem,Cartridge* cartridge,PPUBus* ppuBus) : display(display),mainBus(mem),cartridge(cartridge),ppuBus(ppuBus) { };
         void tick();
         const bool inline isFrameDone() { return frameDone; };
         void clearFrameDone() { frameDone = false; };
         friend std::ostream& operator<<(std::ostream &out,PPU &ppu); // For logging stuff
+        void getPatternTable();
         friend class PPUBus;
     private:
         Bus* mainBus;
         Cartridge* cartridge;
         PPUBus* ppuBus;
         Display* display;
-        int line = 0,row = 0;
+        BYTE PPU_BUFFER;
+        short int col = 0,row = 0;
+        BYTE OFFSET_X = 0;
         bool frameDone = false;
-        bool VBLANK = false;
+        bool oddFrame = false;
+ 
+
 };
 
 #endif

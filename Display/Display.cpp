@@ -83,7 +83,7 @@ void Display::renderFrame()
 
 void Display::initDebug()
 {
-    debugWindow = SDL_CreateWindow("DEBUG WINDOW", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, DEBUG_WIDTH * 2, DEBUG_HEIGHT * 2, 0);
+    debugWindow = SDL_CreateWindow("DEBUG WINDOW", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, DEBUG_WIDTH * 2 , DEBUG_HEIGHT * 2 , 0);
 
     if(!debugWindow)
     {
@@ -100,6 +100,10 @@ void Display::initDebug()
     SDL_RenderSetLogicalSize(Drenderer, DEBUG_WIDTH, DEBUG_HEIGHT);
 
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
+
+    for(int i = 0;i < DEBUG_HEIGHT;i++)
+        for(int j = 0;j < DEBUG_WIDTH;j++)
+            setPixelDebug(i,j,{84,84,84});
 }
 
 #ifdef DEBUG
@@ -126,4 +130,19 @@ void Display::renderDebugFrame()
 
     SDL_Delay(1000/60);
 }
+
+void Display::setPixelDebug(int x, int y,PIXEL_RGB colors)
+{
+    PIXEL pixel = 0;
+    
+    pixel |= 255 << 24;
+    pixel |= (PIXEL)colors.r << 16;
+    pixel |= (PIXEL)colors.g << 8;
+    pixel |= (PIXEL)colors.b << 0;
+
+    debug[x + y * DEBUG_WIDTH] = pixel;
+}
+
+
+
 #endif

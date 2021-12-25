@@ -1,61 +1,82 @@
-#ifndef NES_CPU_H
-#define NES_CPU_H
+#ifndef CPU_H
+#define CPU_H
 
-#include "../Utils/handler.h"
-#include "../Bus/Bus.h"
-#include "../PPU/PPU.h"
+
+
 #include <functional>
 
 using std::function;
 
-/*  
+#include "../Utils/handler.h"
+#include "../Bus/Bus.h"
 
-    This is a solid emulation of 6502 Proccessor which used in NES ,
-    
-    CPU EMULATION TYPE : Jump Table Based
+#ifdef CPUDEBUG
 
-    EXPLANATION :
-    Each addressing mode (ADDRESSING_MODE) and operation (OPEXEC) is a lambda function 
-    and they are forming INSTRUCTION struct with cycle count for each OPCODE
-    Since there is 256 OPCODE but 6502 using only 151 of them,remaining
-    OPCODEs are illegal and they literally do nothing (NOP)
+#include <stdio.h>
+#include <thread>
 
-*/
-
-
-
-
-
-
-
+#endif
 
 class CPU
 {
     public:
-        CPU(Bus& mem,PPU& ppu); 
-        
+        CPU(Bus& bus);
         void tick();
-
-        friend std::ostream& operator<<(std::ostream &out,CPU &cpu); // For logging stuff
-
+        void reset();
+        void NMI();
+        void IRQ();
+        friend std::ostream& operator<<(std::ostream &out,CPU &cpu);
     private:
+
+#ifdef CPUDEBUG
+        void log();
+        FILE* logFile;
+#endif
+
+        /* REGISTERS */
+        BYTE A = 0x00;
+        BYTE X = 0x00;
+        BYTE Y = 0x00;
+        BYTE SP = 0xFF;
+        union
+        {
+            struct
+            {
+                FLAG CARRY : 1, ZERO : 1, INTERRUPT : 1, DECIMAL : 1, BREAK : 1, UNUSED : 1, OVERFLOW : 1, NEGATIVE : 1;
+            };
+            BYTE combined;
+        } STATUS;
+
+
         using OPEXEC = void;
-        using OPEXEC_PTR = const std::function<CPU::OPEXEC (ADDRESS)> CPU::*;
-        using ADDRESSING_MODE =  const function<ADDRESS ()> CPU::*;
+        using OPEXEC_PTR = OPEXEC (CPU::*)(ADDRESS source);
+        using ADDRESSING_MODE = ADDRESS(CPU::*)();
         struct INSTRUCTION 
         {
-            ADDRESSING_MODE addr;
             OPEXEC_PTR operation;
-            BYTE cycles;
+            ADDRESSING_MODE addr;
         };
 
-        /*----------CORE REGISTERS------------*/
-        BYTE A   = 0x00; // Accumulator
-        BYTE X   = 0x00; //
-        BYTE Y   = 0x00; // Index registers
-        BYTE SP  = 0xFF; // Stack Pointer is between 0xFF and 0x00
+        INSTRUCTION table[256];
 
-        FLAG CARRY = 0,OVERFLOWBIT = 0,ZERO = 0,NEGATIVE = 0,BREAK = 0,INTERRUPT_DISABLE = 0,DECIMAL = 0; // Processor flags
+        static constexpr BYTE cycleCounts[256] = {
+		7,6,2,8,3,3,5,5,3,2,2,2,4,4,6,6,
+		2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
+		6,6,2,8,3,3,5,5,4,2,2,2,4,4,6,6,
+		2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
+		6,6,2,8,3,3,5,5,3,2,2,2,3,4,6,6,
+		2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
+		6,6,2,8,3,3,5,5,4,2,2,2,5,4,6,6,
+		2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
+		2,6,2,6,3,3,3,3,2,2,2,2,4,4,4,4,
+		2,6,2,6,4,4,4,4,2,5,2,5,5,5,5,5,
+		2,6,2,6,3,3,3,3,2,2,2,2,4,4,4,4,
+		2,5,2,5,4,4,4,4,2,4,2,4,4,4,4,4,
+		2,6,2,8,3,3,5,5,2,2,2,2,4,4,6,6,
+		2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
+		2,6,2,8,3,3,5,5,2,2,2,2,4,4,6,6,
+		2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
+	};
 
         static const ADDRESS IRQVECTOR_H = 0xFFFF;
         static const ADDRESS IRQVECTOR_L = 0xFFFE;
@@ -64,11 +85,12 @@ class CPU
         static const ADDRESS NMIVECTOR_H = 0xFFFB;
         static const ADDRESS NMIVECTOR_L = 0xFFFA;
 
-        /* PROGBus COUNTER */
         ADDRESS programCounter = 0x0000;
 
         /* CYCLE INDEX */
-        uint64_t currentCycle = 0x0000000000000000;
+        BYTE cycleRemaining = 0;
+
+        BYTE additionalCycle0 = 0,additionalCycle1 = 0;
 
         BYTE currentOpCode;
 
@@ -76,535 +98,139 @@ class CPU
 
         Bus& bus;
 
-        PPU& ppu;
-        
-        void reset(); // CPU to default state
+        int COUNTER = 0;
 
-        void push(BYTE value); // Push value to stack
+        ADDRESS source;
 
-        BYTE pop(); // Pop from stack 
+        void push(BYTE value);
 
-        INSTRUCTION table[256];
-
-        void execute();
-        
-
+        BYTE pop();
         /*------------------------OPERATIONS------------------------*/
-        const function<OPEXEC(ADDRESS)> ADC = [this](ADDRESS source)
-        {
-            BYTE data = bus.readFromMemory(source);
-            unsigned int temp = data + A + (CARRY ? 1 : 0);
-            ZERO = !(temp & 0xFF);
-
-            if(DECIMAL)
-            {
-                if(((A & 0xF) + (data & 0xF) + (CARRY ? 1 : 0)) > 9) temp += 6;
-                NEGATIVE = temp & 0x80;
-                OVERFLOWBIT = !((A ^ data) & 0x80) && ((A ^ temp) & 0x80);
-                if(temp > 0x99) temp += 96;
-                CARRY = temp > 0x99; 
-            }
-            else
-            {
-                NEGATIVE = temp & 0x80;
-                OVERFLOWBIT = !((A ^ data) & 0x80) && ((A ^ temp) & 0x80);
-                CARRY = temp > 0xFF;
-            }
-
-            A = temp & 0xFF;
-        };
-
-        const function<OPEXEC(ADDRESS)> AND = [this](ADDRESS source)
-        {
-            A = A | bus.readFromMemory(source);
-            ZERO = !A;
-            NEGATIVE = A & 0x80;
-        };
-
-        const function<OPEXEC(ADDRESS)> ASL = [this](ADDRESS source)
-        {
-            BYTE data = bus.readFromMemory(source);
-            CARRY = data & 0x80;
-            data <<= 1;
-            data &= 0xFF;
-            NEGATIVE = data & 0x80;
-            ZERO = !data;
-            bus.writeToMemory(source,data);
-        };
-
-        const function<OPEXEC(ADDRESS)> ASL_ACC = [this](ADDRESS source)
-        {
-            CARRY = A & 0x80;
-            A <<= 1;
-            A &= 0xFF;
-            NEGATIVE = A & 0x80;
-            ZERO = !A;
-        };
-
-        const function<OPEXEC(ADDRESS)> BCC = [this](ADDRESS source)
-        {
-            if(!CARRY)
-                programCounter = source;
-        };
-
-        const function<OPEXEC(ADDRESS)> BCS = [this](ADDRESS source)
-        {
-            if(CARRY)
-                programCounter = source;
-        };
-
-        const function<OPEXEC(ADDRESS)> BEQ = [this](ADDRESS source)
-        {
-            if(ZERO)
-                programCounter = source;
-        };
-
-        const function<OPEXEC(ADDRESS)> BIT = [this](ADDRESS source)
-        {
-            ADDRESS data = bus.readFromMemory(source) & A;
-            ZERO = !data;
-            NEGATIVE = data & 0x80;
-            
-        };
-
-        const function<OPEXEC(ADDRESS)> BMI = [this](ADDRESS source)
-        {
-            if(NEGATIVE)
-                programCounter = source;
-        };
-
-        const function<OPEXEC(ADDRESS)> BNE = [this](ADDRESS source)
-        {
-            if(!ZERO)
-                programCounter = source;
-        };
-
-        const function<OPEXEC(ADDRESS)> BPL = [this](ADDRESS source)
-        {
-            if(!NEGATIVE)
-                programCounter = source;
-        };
-
-        const function<OPEXEC(ADDRESS)> BRK = [this](ADDRESS source)
-        {
-            BYTE flagByte = 0xFF;
-            flagByte |= 1UL << BREAK_BIT;
-            CARRY ? flagByte |= 1UL << CARRY_BIT : flagByte &= ~(1UL << CARRY_BIT);
-            ZERO ? flagByte |= 1UL << ZERO_BIT : flagByte &= ~(1UL << ZERO_BIT);
-            INTERRUPT_DISABLE ? flagByte |= 1UL << INTERRUPT_DISABLE_BIT : flagByte &= ~(1UL << INTERRUPT_DISABLE_BIT);
-            DECIMAL ? flagByte |= 1UL << DECIMAL_MODE_BIT : flagByte &= ~(1UL << DECIMAL_MODE_BIT);
-            OVERFLOWBIT ? flagByte |= 1UL << OVERFLOW_BIT : flagByte &= ~(1UL << OVERFLOW_BIT);
-            NEGATIVE ? flagByte |= 1UL << NEGATIVE_BIT : flagByte &= ~(1UL << NEGATIVE_BIT);
-            programCounter++;
-            push((programCounter >> 8) & 0xFF);
-            push(programCounter & 0xFF);
-            push(flagByte);
-
-            INTERRUPT_DISABLE = 1;
-            programCounter = (bus.readFromMemory(IRQVECTOR_H) << 8) + bus.readFromMemory(IRQVECTOR_L);
-        };
-
-        const function<OPEXEC(ADDRESS)> BVC = [this](ADDRESS source)
-        {
-            if(!OVERFLOWBIT)
-                programCounter = source;
-        };
-
-        const function<OPEXEC(ADDRESS)> BVS = [this](ADDRESS source)
-        {
-            if(OVERFLOWBIT)
-                programCounter = source;
-        };
-
-        const function<OPEXEC(ADDRESS)> CLC = [this](ADDRESS source)
-        {
-            CARRY = 0;
-        };
-
-        const function<OPEXEC(ADDRESS)> CLD = [this](ADDRESS source)
-        {
-            DECIMAL = 0;
-        };
-
-        const function<OPEXEC(ADDRESS)> CLI = [this](ADDRESS source)
-        {
-            INTERRUPT_DISABLE = 0;
-        };
-
-        const function<OPEXEC(ADDRESS)> CLV = [this](ADDRESS source)
-        {
-            OVERFLOWBIT = 0;
-        };
-
-        const function<OPEXEC(ADDRESS)> CMP = [this](ADDRESS source)
-        {
-            BYTE data = A - bus.readFromMemory(source);
-            CARRY = (0x100 > data) ? 1 : 0;
-            NEGATIVE = (0x80 & data) ? 1 : 0;
-            ZERO = (data & 0xFF) ? 0 : 1;
-        };
-
-        const function<OPEXEC(ADDRESS)> CPX = [this](ADDRESS source)
-        {
-            BYTE data = X - bus.readFromMemory(source);
-            CARRY = (0x100 > data) ? 1 : 0;
-            NEGATIVE = (0x80 & data) ? 1 : 0;
-            ZERO = (data & 0xFF) ? 0 : 1;
-        };
-
-        const function<OPEXEC(ADDRESS)> CPY = [this](ADDRESS source)
-        {
-            BYTE data = Y - bus.readFromMemory(source);
-            CARRY = (0x100 > data) ? 1 : 0;
-            NEGATIVE = (0x80 & data) ? 1 : 0;
-            ZERO = (data & 0xFF) ? 0 : 1;
-        };
-
-        const function<OPEXEC(ADDRESS)> DEC = [this](ADDRESS source)
-        {
-            BYTE data = bus.readFromMemory(source) - 1;
-            NEGATIVE = data & 0x80;
-            ZERO = !data;
-            bus.writeToMemory(source,data);
-        };
-
-        const function<OPEXEC(ADDRESS)> DEX = [this](ADDRESS source)
-        {
-            BYTE data = X - 1;
-            NEGATIVE = data & 0x80;
-            ZERO = !data;
-            X = data;
-        };
-
-        const function<OPEXEC(ADDRESS)> DEY = [this](ADDRESS source)
-        {
-            BYTE data = Y - 1;
-            NEGATIVE = data & 0x80;
-            ZERO = !data;
-            Y = data;
-        };
-
-        const function<OPEXEC(ADDRESS)> EOR = [this](ADDRESS source)
-        {
-            BYTE data = A ^ bus.readFromMemory(source);
-            NEGATIVE = data & 0x80;
-            ZERO = data == 0 ? 1 : 0;
-            A = data;
-        };
-
-        const function<OPEXEC(ADDRESS)> INC = [this](ADDRESS source)
-        {
-            BYTE data = (bus.readFromMemory(source) + 1) % 256;
-            ZERO = !data;
-            NEGATIVE = data & 0x80;
-            bus.writeToMemory(source,data);
-        };
-
-        const function<OPEXEC(ADDRESS)> INX_OP = [this](ADDRESS source)
-        {
-            X = (X + 1) % 256;
-            ZERO = !X;
-            NEGATIVE = X & 0x80;
-        };
-
-        const function<OPEXEC(ADDRESS)> INY_OP = [this](ADDRESS source)
-        {
-            Y = (Y + 1) % 256;
-            ZERO = !Y;
-            NEGATIVE = Y & 0x80;
-        };
-
-        const function<OPEXEC(ADDRESS)> JMP = [this](ADDRESS source)
-        {
-            programCounter = source;
-        };
-
-        const function<OPEXEC(ADDRESS)> JSR = [this](ADDRESS source)
-        {
-            programCounter--;
-            push((programCounter >> 8) &  0xFF);
-            push(programCounter & 0xFF);
-            programCounter = source;
-        };
-
-        const function<OPEXEC(ADDRESS)> LDA = [this](ADDRESS source)
-        {
-            A = bus.readFromMemory(source);
-            ZERO = !A;
-            NEGATIVE = 	A & 0x80;
-        };
-
-        const function<OPEXEC(ADDRESS)> LDX = [this](ADDRESS source)
-        {
-            X = bus.readFromMemory(source);
-            ZERO = !X;
-            NEGATIVE = 	X & 0x80;
-        };
-
-        const function<OPEXEC(ADDRESS)> LDY = [this](ADDRESS source)
-        {
-            Y = bus.readFromMemory(source);
-            ZERO = !Y;
-            NEGATIVE = 	Y & 0x80;
-        };
-
-        const function<OPEXEC(ADDRESS)> LSR = [this](ADDRESS source)
-        {
-            BYTE data = bus.readFromMemory(source);
-            CARRY = data & 0x01;
-            data >>= 1;
-            ZERO = !data;
-            NEGATIVE = 0;
-            bus.writeToMemory(source,data);
-        };
-
-        const function<OPEXEC(ADDRESS)> LSR_ACC = [this](ADDRESS source)
-        {
-            CARRY = A & 0x01;
-            A >>= 1;
-            ZERO = !A;
-            NEGATIVE = 0;
-        };
-
-        const function<OPEXEC(ADDRESS)> NOP = [this](ADDRESS source) { };;
-
-        const function<OPEXEC(ADDRESS)> ORA = [this](ADDRESS source)
-        {
-            A = bus.readFromMemory(source) | A;
-            ZERO = !A;
-            NEGATIVE = A & 0x80;
-        };
-
-        const function<OPEXEC(ADDRESS)> PHA = [this](ADDRESS source)
-        {
-            push(A);
-        };
-
-        const function<OPEXEC(ADDRESS)> PHP = [this](ADDRESS source)
-        {
-            BYTE flagByte = 0xFF;
-            flagByte |= 1UL << BREAK_BIT;
-            CARRY ? flagByte |= 1UL << CARRY_BIT : flagByte &= ~(1UL << CARRY_BIT);
-            ZERO ? flagByte |= 1UL << ZERO_BIT : flagByte &= ~(1UL << ZERO_BIT);
-            INTERRUPT_DISABLE ? flagByte |= 1UL << INTERRUPT_DISABLE_BIT : flagByte &= ~(1UL << INTERRUPT_DISABLE_BIT);
-            DECIMAL ? flagByte |= 1UL << DECIMAL_MODE_BIT : flagByte &= ~(1UL << DECIMAL_MODE_BIT);
-            OVERFLOWBIT ? flagByte |= 1UL << OVERFLOW_BIT : flagByte &= ~(1UL << OVERFLOW_BIT);
-            NEGATIVE ? flagByte |= 1UL << NEGATIVE_BIT : flagByte &= ~(1UL << NEGATIVE_BIT);
-
-            push(flagByte);	
-        };
-
-        const function<OPEXEC(ADDRESS)> PLA = [this](ADDRESS source)
-        {
-            A = pop();
-        };
-
-        const function<OPEXEC(ADDRESS)> PLP = [this](ADDRESS source)
-        {
-            BYTE data = pop();
-            CARRY = (data >> CARRY_BIT) & 1;
-            ZERO = (data >> ZERO_BIT) & 1;
-            DECIMAL = (data >> DECIMAL_MODE_BIT) & 1;
-            BREAK = (data >> BREAK_BIT) & 1;
-            OVERFLOWBIT = (data >> OVERFLOW_BIT) & 1;
-            NEGATIVE = (data >> NEGATIVE_BIT) & 1;	
-        };
-
-        const function<OPEXEC(ADDRESS)> ROL = [this](ADDRESS source)
-        {
-            BYTE data = bus.readFromMemory(source);
-            data <<= 1;
-            if(CARRY) data |= 0x01;
-            CARRY = data > 0xFF;
-            data &= 0xFF;
-            ZERO = !data;
-            NEGATIVE = data & 0x80;
-            bus.writeToMemory(source,data);
-        };
-
-
-        const function<OPEXEC(ADDRESS)> ROL_ACC = [this](ADDRESS source)
-        {
-            A <<= 1;
-            if(CARRY) A |= 0x01;
-            CARRY = A > 0xFF;
-            A &= 0xFF;
-            ZERO = !A;
-            NEGATIVE = A & 0x80;
-        };
-
-        const function<OPEXEC(ADDRESS)> ROR = [this](ADDRESS source)
-        {
-            BYTE data = bus.readFromMemory(source);
-            if(CARRY) data |= 0x100;
-            CARRY = data & 0x01;
-            data >>= 1;
-            data &= 0xFF;
-            NEGATIVE = data & 0x80;
-            ZERO = !data;
-            bus.writeToMemory(source,data);
-        };
-
-        const function<OPEXEC(ADDRESS)> ROR_ACC = [this](ADDRESS source)
-        {
-            BYTE data = A;
-            if(CARRY) data |= 0x100;
-            CARRY = data & 0x01;
-            data >>= 1;
-            data &= 0xFF;
-            NEGATIVE = data & 0x80;
-            ZERO = !data;
-            A = data;
-        };
-
-        const function<OPEXEC(ADDRESS)> RTI = [this](ADDRESS source)
-        {
-            BYTE low,high,flagByte;
-            flagByte = pop();
-            
-            CARRY = (flagByte >> CARRY_BIT) & 1;
-            ZERO = (flagByte >> ZERO_BIT) & 1;
-            DECIMAL = (flagByte >> DECIMAL_MODE_BIT) & 1;
-            BREAK = (flagByte >> BREAK_BIT) & 1;
-            OVERFLOWBIT = (flagByte >> OVERFLOW_BIT) & 1;
-            NEGATIVE = (flagByte >> NEGATIVE_BIT) & 1;	
-
-            low = pop();
-            high = pop();
-
-            programCounter = (high << 8) | low; 
-        };
-
-        const function<OPEXEC(ADDRESS)> RTS = [this](ADDRESS source)
-        {
-            BYTE low,high;
-
-            low = pop();
-            high = pop();
-
-            programCounter = ((high << 8) | low) + 1;
-        };
-
-        const function<OPEXEC(ADDRESS)> SBC = [this](ADDRESS source)
-        {
-            BYTE data = bus.readFromMemory(source);
-            uint32_t temp = A - data - (CARRY ? 1 : 0);
-            NEGATIVE = temp & 0x80;
-            ZERO = !(temp & 0xFF);
-            OVERFLOWBIT = ((A ^ temp) & 0x80) && ((A ^ data) & 0x80);
-
-            if(DECIMAL)
-            {
-                if( ((A & 0x0F)  - CARRY)  < (data & 0x0F)) temp -= 6;
-                if(temp > 0x99)
-                    temp -= 0x60; 
-            };  
-            CARRY = temp < 0x100;
-            A = (temp & 0xFF);
-        };
-
-        const function<OPEXEC(ADDRESS)> SEC = [this](ADDRESS source)
-        {
-            CARRY = 1;
-        };
-
-        const function<OPEXEC(ADDRESS)> SED = [this](ADDRESS source)
-        {
-            DECIMAL = 1;
-        };
-
-        const function<OPEXEC(ADDRESS)> SEI = [this](ADDRESS source)
-        {
-            INTERRUPT_DISABLE = 1;
-        };
-
-        const function<OPEXEC(ADDRESS)> STA = [this](ADDRESS source)
-        {
-            bus.writeToMemory(source,A);
-        };
-
-        const function<OPEXEC(ADDRESS)> STX = [this](ADDRESS source)
-        {
-            bus.writeToMemory(source,X);
-        };
-
-        const function<OPEXEC(ADDRESS)> STY = [this](ADDRESS source)
-        {
-            bus.writeToMemory(source,Y);
-        };
-
-        const function<OPEXEC(ADDRESS)> TAX = [this](ADDRESS source)
-        {
-            X = A;
-            ZERO = !X;
-            NEGATIVE = X & 0x80;
-        };
-
-        const function<OPEXEC(ADDRESS)> TAY = [this](ADDRESS source)
-        {
-            Y = A;
-            ZERO = !Y;
-            NEGATIVE = Y & 0x80;
-        };
-
-        const function<OPEXEC(ADDRESS)> TSX = [this](ADDRESS source)
-        {
-            X = SP;
-            ZERO = !X;
-            NEGATIVE = X & 0x80;
-        };
-
-        const function<OPEXEC(ADDRESS)> TXA = [this](ADDRESS source)
-        {
-            A = X;
-            ZERO = !X;
-            NEGATIVE = X & 0x80;
-        };
-
-        const function<OPEXEC(ADDRESS)> TYA = [this](ADDRESS source)
-        {
-            A = Y;
-            ZERO = !Y;
-            NEGATIVE = Y & 0x80;
-        };
-
-        const function<OPEXEC(ADDRESS)> TXS = [this](ADDRESS source)
-        {
-            SP = X;	
-        };
-
-        const function<OPEXEC(ADDRESS)> ILLEGAL = [this](ADDRESS source)
-        {
-            
-        };
+        OPEXEC ADC(ADDRESS source);
+
+        OPEXEC AND(ADDRESS source);
+
+        OPEXEC ASL(ADDRESS source);
+        OPEXEC BCC(ADDRESS source);
+        OPEXEC BCS(ADDRESS source);
+        OPEXEC BEQ(ADDRESS source);
+        OPEXEC BIT(ADDRESS source);
+
+        OPEXEC BMI(ADDRESS source);
+
+        OPEXEC BNE(ADDRESS source);
+
+        OPEXEC BPL(ADDRESS source);
+
+        OPEXEC BRK(ADDRESS source);
+        OPEXEC BVC(ADDRESS source);
+
+        OPEXEC BVS(ADDRESS source);
+        OPEXEC CLC(ADDRESS source);
+
+        OPEXEC CLD(ADDRESS source);
+
+        OPEXEC CLI(ADDRESS source);
+
+        OPEXEC CLV(ADDRESS source);
+
+        OPEXEC CMP(ADDRESS source);
+
+        OPEXEC CPX(ADDRESS source);
+
+        OPEXEC CPY(ADDRESS source);
+        OPEXEC DEC(ADDRESS source);
+        OPEXEC DEX(ADDRESS source);
+
+        OPEXEC DEY(ADDRESS source);
+
+        OPEXEC EOR(ADDRESS source);
+
+        OPEXEC INC(ADDRESS source);
+
+        OPEXEC INX_OP(ADDRESS source);
+        OPEXEC INY_OP(ADDRESS source);
+
+        OPEXEC JMP(ADDRESS source);
+
+        OPEXEC JSR(ADDRESS source);
+
+        OPEXEC LDA(ADDRESS source);
+
+        OPEXEC LDX(ADDRESS source);
+
+        OPEXEC LDY(ADDRESS source);
+
+        OPEXEC LSR(ADDRESS source);
+
+
+        OPEXEC NOP(ADDRESS source);
+
+        OPEXEC ORA(ADDRESS source);
+        OPEXEC PHA(ADDRESS source);
+        OPEXEC PHP(ADDRESS source);
+
+        OPEXEC PLA(ADDRESS source);
+
+        OPEXEC PLP(ADDRESS source);
+
+        OPEXEC ROL(ADDRESS source);
+
+        OPEXEC ROR(ADDRESS source);
+
+
+        OPEXEC RTI(ADDRESS source);
+
+        OPEXEC RTS(ADDRESS source);
+        OPEXEC SBC(ADDRESS source);
+
+        OPEXEC SEC(ADDRESS source);
+        OPEXEC SED(ADDRESS source);
+
+        OPEXEC SEI(ADDRESS source);
+
+        OPEXEC STA(ADDRESS source);
+
+        OPEXEC STX(ADDRESS source);
+
+        OPEXEC STY(ADDRESS source);
+        OPEXEC TAX(ADDRESS source);
+
+        OPEXEC TAY(ADDRESS source);
+
+        OPEXEC TSX(ADDRESS source);
+
+        OPEXEC TXA(ADDRESS source);
+
+        OPEXEC TYA(ADDRESS source);
+        OPEXEC TXS(ADDRESS source);
+        OPEXEC ILLEGAL(ADDRESS source);
       
         /*------------ADDRESSING MODES--------*/
-        const function<ADDRESS()> ACC = [this]() { return A; }; // ACCUMULATOR
-        const function<ADDRESS()> IMM = [this]() { return programCounter++; }; // IMMEDIATE
-        const function<ADDRESS()> ABS = [this]() { ADDRESS addrLower = bus.readFromMemory(programCounter++),
-                                                        addrHigher = bus.readFromMemory(programCounter++); 
-                                                        return addrLower + (addrHigher << 8); };  // ABSOLUTE
-        const function<ADDRESS()> ZER = [this]() { return bus.readFromMemory(programCounter++); }; // ZERO PAGE
-        const function<ADDRESS()> ZEX = [this]() { return (bus.readFromMemory(programCounter++) + X) % 256; }; // INDEXED-X ZERO PAGE
-        const function<ADDRESS()> ZEY = [this]() { return (bus.readFromMemory(programCounter++) + Y) % 256; }; // INDEXED-Y ZERO PAGE
-        const function<ADDRESS()> ABX = [this]() { return ABS() + X; }; // INDEXED-X ABSOLUTE
-        const function<ADDRESS()> ABY = [this]() { return ABS() + X; }; // INDEXED-Y ABSOLUTE
-        const function<ADDRESS()> IMP = [this]() { return 0; }; // IMPLIED
-        const function<ADDRESS()> REL = [this]() { ADDRESS offset = (ADDRESS) bus.readFromMemory(programCounter++); 
-                                                        if(offset & 0x80) offset |= 0xFF00; 
-                                                        return programCounter + (int16_t) offset; }; // RELATIVE
-        const function<ADDRESS()> INX = [this]() { ADDRESS zeroLower = ZEX(),zeroHigher = (zeroLower + 1) % 256; 
-                                                        return bus.readFromMemory(zeroLower) + (bus.readFromMemory(zeroHigher) << 8); }; // INDEXED-X INDIRECT
-        const function<ADDRESS()> INY = [this]() { ADDRESS zeroLower = bus.readFromMemory(programCounter++),
-                                                        zeroHigher = (zeroLower + 1) % 256; 
-                                                        return bus.readFromMemory(zeroLower) + (bus.readFromMemory(zeroHigher) << 8) + Y; }; // INDEXED-Y INDIRECT
-        const function<ADDRESS()> ABI = [this]() { ADDRESS addressLower = bus.readFromMemory(programCounter++),
-                                                        addressHigher = bus.readFromMemory(programCounter++),
-                                                        abs = (addressHigher << 8) | addressLower,
-                                                        effLower = bus.readFromMemory(abs),
-                                                        effHigher = bus.readFromMemory((abs & 0xFF00) + ((abs + 1) & 0x00FF));
-                                                        return effLower + 0x100 * effHigher; }; // ABSOLUTE INDIRECT
 
+        ADDRESS IMM(); // IMMEDIATE
+        
+        ADDRESS ABS();  // ABSOLUTE
+
+        ADDRESS ZER(); // ZERO PAGE
+
+        ADDRESS ZEX(); // INDEXED-X ZERO PAGE
+
+        ADDRESS ZEY(); // INDEXED-Y ZERO PAGE
+
+        ADDRESS ABX(); // INDEXED-X ABSOLUTE
+
+        ADDRESS ABY(); // INDEXED-Y ABSOLUTE
+
+        ADDRESS IMP(); // IMPLIED
+        
+        ADDRESS REL(); // RELATIVE
+
+        ADDRESS INX(); // INDEXED-X INDIRECT
+
+        ADDRESS INY(); // INDEXED-Y INDIRECT
+
+        ADDRESS ABI(); // ABSOLUTE INDIRECT
 
 };
 

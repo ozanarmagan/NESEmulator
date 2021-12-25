@@ -11,12 +11,11 @@ namespace{
 }
 
 
-NES::NES() : cartridge(),ppuBus(),bus(ppuBus),ppu(&display,&bus,&cartridge,&ppuBus),cpu(bus,ppu),controller(&bus),display(&events,controller)
+NES::NES() : cartridge(),ppuBus(),bus(ppuBus),ppu(&display,&bus,&cartridge,&ppuBus),cpu(bus),controller(&bus),display(&events,controller)
 {
-
 }
 
-NES::NES(std::string fileName) : cartridge(),ppuBus(),bus(ppuBus),ppu(&display,&bus,&cartridge,&ppuBus),cpu(bus,ppu),controller(&bus),display(&events,controller)
+NES::NES(std::string fileName) : cartridge(),ppuBus(),bus(ppuBus),ppu(&display,&bus,&cartridge,&ppuBus),cpu(bus),controller(&bus),display(&events,controller)
 {
     insertNESFile(fileName);   
 }
@@ -44,16 +43,16 @@ void NES::insertNESFile(std::string fileName)
         BYTE* PRGmem = new BYTE[header.PRGROMChunks * 16384];
         file.read((char*) PRGmem,header.PRGROMChunks * 16384);
         cartridge.loadPRGData(PRGmem);
-
         cartridge.setCHRNum(header.CHRROMChunks);
-        BYTE* CHRmem = new BYTE[header.CHRROMChunks * 8192];
-        file.read((char*) CHRmem,header.CHRROMChunks * 8192);
+        BYTE* CHRmem;
+        if(header.CHRROMChunks == 0) // If it is CHR RAM
+            CHRmem = new BYTE[8192];
+        else
+            CHRmem = new BYTE[header.CHRROMChunks * 8192];
+        file.read((char*) CHRmem,(header.CHRROMChunks != 0 ? header.CHRROMChunks : 1) * 8192);
         cartridge.loadCHRData(CHRmem);
-        
         cartridge.setMapperID(mapperID);
         setMapper();
-        bus.setMapper(mapper);
-        ppuBus.setMapper(mapper);
         file.close();
     }   
     else
@@ -71,13 +70,16 @@ void NES::setMapper()
     default:
         break;
     }
+
+    bus.setMapper(mapper);
+    ppuBus.setMapper(mapper);
 }
 
 
 
 void NES::log()
 {
-    std::cout << cpu;
+    //std::cout << cpu;
     bus.print();
     std::cout << cartridge;
 }
@@ -85,6 +87,7 @@ void NES::log()
 
 void NES::start()
 {
+    cpu.reset();
     std::cout << "\nLOG: " << "Main Loop Has Started!\n";
 
     mainLoop();
@@ -102,6 +105,7 @@ void NES::mainLoop()
         display.renderDebugFrame();
 #endif
         ppu.clearFrameDone();
+        ppu.getPatternTable();
         controller.handleInput();
     }
 }
@@ -109,7 +113,15 @@ void NES::mainLoop()
 
 void NES::tick()
 {
+
+
     ppu.tick();
+
+    if(ppuBus.getNMI())
+    {
+        cpu.NMI();
+        ppuBus.setNMI(false);
+    }
 
 
     if(clock++ % 3 == 0)

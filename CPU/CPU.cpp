@@ -690,7 +690,7 @@ CPU::OPEXEC CPU::ADC(ADDRESS source)
 CPU::OPEXEC CPU::AND(ADDRESS source)
 {
 	A = A & bus.readFromMemory(source);
-	STATUS.ZERO = (A & 0x00) == 0 ? 1 : 0;
+	STATUS.ZERO = (A & 0xFF) == 0 ? 1 : 0;
 	STATUS.NEGATIVE = (A & 0x80) ? 1 : 0;
 	additionalCycle1++;
 };
@@ -938,7 +938,7 @@ CPU::OPEXEC CPU::JSR(ADDRESS source)
 CPU::OPEXEC CPU::LDA(ADDRESS source)
 {
 	A = bus.readFromMemory(source);
-	STATUS.ZERO = (A == 0) ? 1 : 0;
+	STATUS.ZERO = (A == 0x00) ? 1 : 0;
 	STATUS.NEGATIVE = 	(A & 0x80) ? 1 : 0;
 	additionalCycle1++;
 };

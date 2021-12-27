@@ -1,7 +1,7 @@
 #ifndef CPU_H
 #define CPU_H
 
-#define CPUDEBUG
+//#define CPUDEBUG
 
 #include <functional>
 

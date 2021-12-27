@@ -12,7 +12,7 @@
 class Bus
 {
     public:
-        Bus(PPUBus& ppuBus) : ppuBus(ppuBus) {  };
+        Bus(PPUBus& ppuBus) : ppuBus(ppuBus) { std::fill_n(memory,2049,0xCC); };
         BYTE readFromMemory(ADDRESS address);
         void writeToMemory(ADDRESS address,BYTE value);
         void clearMemoryBlock(ADDRESS start,ADDRESS end);

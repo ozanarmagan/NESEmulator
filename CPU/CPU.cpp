@@ -18,7 +18,7 @@ namespace
 CPU::CPU(Bus& mem) : bus(mem) { 
 
 #ifdef CPUDEBUG
-	logFile = fopen("C:/Users/Ozan/Desktop/C++/NES_Emulator/log.log","w+");
+	logFile = fopen("./Logs/cpu.log","w+");
 #endif
 	
 	COUNTER = 0;
@@ -854,7 +854,7 @@ CPU::OPEXEC CPU::CPX(ADDRESS source)
 {
 	BYTE data = bus.readFromMemory(source);
 	BYTE temp = X - data;
-	STATUS.CARRY = (Y >= data) ? 1 : 0;
+	STATUS.CARRY = (X >= data) ? 1 : 0;
 	STATUS.NEGATIVE = (0x80 & temp) ? 1 : 0;
 	STATUS.ZERO = (temp & 0x00FF) == 0x0000 ? 1 : 0;
 	additionalCycle1++;
@@ -906,7 +906,7 @@ CPU::OPEXEC CPU::EOR(ADDRESS source)
 CPU::OPEXEC CPU::INC(ADDRESS source)
 {
 	BYTE data = (bus.readFromMemory(source) + 1) % 256;
-	STATUS.ZERO = data == 0x00 ? 1 : 0;
+	STATUS.ZERO = (data == 0x00) ? 1 : 0;
 	STATUS.NEGATIVE = (data & 0x80) ? 1 : 0;
 	bus.writeToMemory(source,data);
 };
@@ -914,14 +914,14 @@ CPU::OPEXEC CPU::INC(ADDRESS source)
 CPU::OPEXEC CPU::INX_OP(ADDRESS source)
 {
 	X = (X + 1) % 256;
-	STATUS.ZERO = X == 0x00 ? 1 : 0;
+	STATUS.ZERO = (X == 0x00) ? 1 : 0;
 	STATUS.NEGATIVE = (X & 0x80) ? 1 : 0;
 };
 
 CPU::OPEXEC CPU::INY_OP(ADDRESS source)
 {
 	Y = (Y + 1) % 256;
-	STATUS.ZERO = Y == 0x00 ? 1 : 0;
+	STATUS.ZERO = (Y == 0x00) ? 1 : 0;
 	STATUS.NEGATIVE = (Y & 0x80) ? 1 : 0;
 };
 
@@ -999,7 +999,7 @@ CPU::OPEXEC CPU::PHP(ADDRESS source)
 CPU::OPEXEC CPU::PLA(ADDRESS source)
 {
 	A = pop();
-	STATUS.ZERO = A == 0x00 ? 1 : 0;
+	STATUS.ZERO = (A == 0x00) ? 1 : 0;
 	STATUS.NEGATIVE = (A & 0x80) ? 1 : 0;
 };
 
@@ -1015,7 +1015,7 @@ CPU::OPEXEC CPU::ROL(ADDRESS source)
 	data <<= 1;
 	if(STATUS.CARRY) data |= 0x01;
 	STATUS.CARRY = temp ? 1 : 0;
-	STATUS.ZERO = !data;
+	STATUS.ZERO = (data == 0x00) ? 1 : 0;
 	STATUS.NEGATIVE = (data & 0x80) ? 1 : 0;
 	if(currentInstruction.addr == &CPU::IMP)
 		A = data;
@@ -1114,35 +1114,35 @@ CPU::OPEXEC CPU::STY(ADDRESS source)
 CPU::OPEXEC CPU::TAX(ADDRESS source)
 {
 	X = A;
-	STATUS.ZERO = X == 0x00 ? 1 : 0;
+	STATUS.ZERO = (X == 0x00) ? 1 : 0;
 	STATUS.NEGATIVE = (X & 0x80) ? 1 : 0;
 };
 
 CPU::OPEXEC CPU::TAY(ADDRESS source)
 {
 	Y = A;
-	STATUS.ZERO = Y == 0x00 ? 1 : 0;
+	STATUS.ZERO = (Y == 0x00) ? 1 : 0;
 	STATUS.NEGATIVE = (Y & 0x80) ? 1 : 0;
 };
 
 CPU::OPEXEC CPU::TSX(ADDRESS source)
 {
 	X = SP;
-	STATUS.ZERO = X == 0x00 ? 1 : 0;
+	STATUS.ZERO = (X == 0x00) ? 1 : 0;
 	STATUS.NEGATIVE = (X & 0x80) ? 1 : 0;
 };
 
 CPU::OPEXEC CPU::TXA(ADDRESS source)
 {
 	A = X;
-	STATUS.ZERO = A== 0x00 ? 1 : 0;
+	STATUS.ZERO = (A== 0x00) ? 1 : 0;
 	STATUS.NEGATIVE = (A & 0x80) ? 1 : 0;
 };
 
 CPU::OPEXEC CPU::TYA(ADDRESS source)
 {
 	A = Y;
-	STATUS.ZERO = A== 0x00 ? 1 : 0;
+	STATUS.ZERO = (A== 0x00) ? 1 : 0;
 	STATUS.NEGATIVE = (A & 0x80) ? 1 : 0;
 };
 

@@ -23,7 +23,7 @@ class PPU
     public:
         PPU(Display* display,Bus* mem,Cartridge* cartridge,PPUBus* ppuBus) : display(display),mainBus(mem),cartridge(cartridge),ppuBus(ppuBus) { 
 #ifdef PPUDEBUG
-        ppuLog = fopen("ppu.log","w+"); 
+        ppuLog = fopen("./Logs/ppu.log","w+"); 
 #endif
         };
         void tick();

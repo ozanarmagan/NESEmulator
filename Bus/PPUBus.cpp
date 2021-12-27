@@ -68,8 +68,25 @@ PPUBus::PPUBus()
 	colors[0x3E] = {0, 0, 0};
 	colors[0x3F] = {0, 0, 0};
 
+
+	PPUSTATUS.combined = 0x00;
+	PPUCTRL.combined   = 0x00;
+	PPUMASK.combined   = 0x00;
+
 	vRAM.combined = 0x0000;
 	tempRAM.combined = 0x0000;
+
+	BG_RENDER_FETCH.BG_NEXT_ATTR = 0x00;
+	BG_RENDER_FETCH.BG_NEXT_HIGH = 0x00;
+	BG_RENDER_FETCH.BG_NEXT_LOW  = 0x00;
+	BG_RENDER_FETCH.BG_NEXT_ID   = 0x00;
+
+	BG_SHIFTER_ATTR_HIGH.combined    = 0x0000;
+	BG_SHIFTER_ATTR_LOW.combined     = 0x0000;
+	BG_SHIFTER_PATTERN_HIGH.combined = 0x0000;
+	BG_SHIFTER_PATTERN_LOW.combined  = 0x0000;
+
+	ppuBuffer = 0x00;
 
 }
 
@@ -90,21 +107,14 @@ BYTE PPUBus::readFromMemory(ADDRESS address)
 		address &= 0x0FFF;
 		if(mapper->getMirroring() == MIRRORING::VERTICAL)
 		{
-			if(address< 0x0000)
-				return 0x00;
-			else 
-				return nameTables[address % 0x800];
+			return nameTables[address % 0x800];
 		}
 		else if(mapper->getMirroring() == MIRRORING::HORIZONTAL)
 		{
-			if(address< 0x0000)
-				return 0x00;
-			else if(address <= 0x07FF)
+			if(address <= 0x07FF)
 				return nameTables[address % 1024];
-			else if(address <= 0x0FFF)
-				return nameTables[(address % 1024) + 1024];
 			else
-				return 0x10;
+				return nameTables[(address % 1024) + 1024];
 		}
 		else
 			return 0x00;
@@ -133,17 +143,13 @@ void PPUBus::writeToMemory(ADDRESS address,BYTE value)
 		address &= 0x0FFF;
 		if(mapper->getMirroring() == MIRRORING::VERTICAL)
 		{
-			if(address< 0x0000)
-				return;
-				nameTables[address % 0x800] = value;
+			nameTables[address % 0x800] = value;
 		}
 		else if(mapper->getMirroring() == MIRRORING::HORIZONTAL)
 		{
-			if(address< 0x0000)
-				return;
-			else if(address <= 0x07FF)
+			if(address <= 0x07FF)
 				nameTables[address & 0x3FF] = value;
-			else if(address <= 0x0FFF)
+			else
 				nameTables[(address % 1024) + 1024] = value;
 		}
 	}

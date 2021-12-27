@@ -8,51 +8,52 @@ void PPU::tick()
     log();
 #endif
 
+
+
     if(row >= -1 && row < 240)
     {
         if(row == 0 && col == 0)
-            ++col;
+            col = 1;
         if(row == -1 && col == -1)
             ppuBus->PPUSTATUS.VBLANK = 0;
         if((col >= 2 && col < 258) || (col >= 321 && col < 338))
         {
             if(ppuBus->PPUMASK.RENDER_BCKGRD == 1)
             {
-                ppuBus->BG_RENDER_CURRENT.BG_PATTERN_LOW <<= 1;
-                ppuBus->BG_RENDER_CURRENT.BG_PATTERN_HIGH <<= 1;
-                ppuBus->BG_RENDER_CURRENT.BG_ATTR_LOW <<= 1;
-                ppuBus->BG_RENDER_CURRENT.BG_ATTR_HIGH <<= 1;
+                ppuBus->BG_SHIFTER_PATTERN_LOW.combined     <<= 1;
+                ppuBus->BG_SHIFTER_PATTERN_HIGH.combined    <<= 1;
+                ppuBus->BG_SHIFTER_ATTR_LOW.combined        <<= 1;
+                ppuBus->BG_SHIFTER_ATTR_HIGH.combined       <<= 1;
             }
             int a = (col - 1) % 8;
             
             if(a == 0)
             {
-                ppuBus->BG_RENDER_CURRENT = ppuBus->BG_RENDER_NEXT;
-                ppuBus->BG_RENDER_NEXT.BG_PATTERN_LOW = ppuBus->BG_RENDER_FETCH.BG_NEXT_LOW;
-                ppuBus->BG_RENDER_NEXT.BG_PATTERN_HIGH = ppuBus->BG_RENDER_FETCH.BG_NEXT_HIGH;
-                ppuBus->BG_RENDER_NEXT.BG_ATTR_LOW = (ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR & 0x01) ? 0xFF : 0x00;
-                ppuBus->BG_RENDER_NEXT.BG_ATTR_HIGH = (ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR & 0x02) ? 0xFF : 0x00;
+                ppuBus->BG_SHIFTER_PATTERN_LOW.combined    =  (ppuBus->BG_SHIFTER_PATTERN_LOW.combined & 0xFF00)  | ppuBus->BG_RENDER_FETCH.BG_NEXT_LOW;
+                ppuBus->BG_SHIFTER_PATTERN_HIGH.combined   =  (ppuBus->BG_SHIFTER_PATTERN_HIGH.combined & 0xFF00) | ppuBus->BG_RENDER_FETCH.BG_NEXT_HIGH;
+                ppuBus->BG_SHIFTER_ATTR_LOW.combined       =  (ppuBus->BG_SHIFTER_ATTR_LOW.combined & 0xFF00)     | ((ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR & 0x01) ? 0xFF : 0x00);
+                ppuBus->BG_SHIFTER_ATTR_HIGH.NEXT          =  (ppuBus->BG_SHIFTER_ATTR_HIGH.combined & 0xFF00)    | ((ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR & 0x02) ? 0xFF : 0x00);
 
                 ppuBus->BG_RENDER_FETCH.BG_NEXT_ID = ppuBus->readFromMemory(0x2000 | (ppuBus->vRAM.combined & 0x0FFF));
             } 
             else if(a == 2)
             {
                 ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR = ppuBus->readFromMemory(0x23C0 | (ppuBus->vRAM.NT_Y << 11)
-                                                                                        | (ppuBus->vRAM.NT_X << 10)
-                                                                                        | ((ppuBus->vRAM.CO_Y >> 2) << 3)
-                                                                                        | (ppuBus->vRAM.CO_X >> 2));
-                if(ppuBus->vRAM.CO_Y & 0x02) ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR >>=4;
-                if(ppuBus->vRAM.CO_X & 0x02) ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR >>=2;
+                                                                                     | (ppuBus->vRAM.NT_X << 10)
+                                                                                     | ((ppuBus->vRAM.CO_Y >> 2) << 3)
+                                                                                     | (ppuBus->vRAM.CO_X >> 2));
+                if(ppuBus->vRAM.CO_Y & 0x02) ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR  >>= 4;
+                if(ppuBus->vRAM.CO_X & 0x02) ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR  >>= 2;
                 ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR &= 0x03;
             }
             else if(a == 4)
                 ppuBus->BG_RENDER_FETCH.BG_NEXT_LOW = ppuBus->readFromMemory((ppuBus->PPUCTRL.PATTERN_BCKGRND << 12)
-                                        + ((ADDRESS)ppuBus->BG_RENDER_FETCH.BG_NEXT_ID << 4)
-                                        + (ppuBus->vRAM.FINE_Y));
+                                                                          + ((ADDRESS)ppuBus->BG_RENDER_FETCH.BG_NEXT_ID << 4)
+                                                                          + (ppuBus->vRAM.FINE_Y));
             else if(a == 6)
                 ppuBus->BG_RENDER_FETCH.BG_NEXT_HIGH = ppuBus->readFromMemory((ppuBus->PPUCTRL.PATTERN_BCKGRND << 12)
-                                        + ((ADDRESS)ppuBus->BG_RENDER_FETCH.BG_NEXT_ID << 4)
-                                        + (ppuBus->vRAM.FINE_Y) + 8);
+                                                                            + ((ADDRESS)ppuBus->BG_RENDER_FETCH.BG_NEXT_ID << 4)
+                                                                            + (ppuBus->vRAM.FINE_Y) + 8);
             else if(a == 7)
                 if(ppuBus->PPUMASK.RENDER_BCKGRD || ppuBus->PPUMASK.RENDER_SPRTS)
                 {
@@ -69,9 +70,7 @@ void PPU::tick()
             if(ppuBus->PPUMASK.RENDER_BCKGRD || ppuBus->PPUMASK.RENDER_SPRTS)
             {
                 if(ppuBus->vRAM.FINE_Y < 7)
-                {
                     ppuBus->vRAM.FINE_Y++;
-                }
                 else
                 {
                     ppuBus->vRAM.FINE_Y = 0;
@@ -81,20 +80,17 @@ void PPU::tick()
                         ppuBus->vRAM.NT_Y = ~ppuBus->vRAM.NT_Y;
                     }
                     else if(ppuBus->vRAM.CO_Y == 31)
-                    {
                         ppuBus->vRAM.CO_Y = 0;
-                    }
                     else
                         ppuBus->vRAM.CO_Y++;
                 }
             }
         if(col == 257)
         {
-            ppuBus->BG_RENDER_CURRENT = ppuBus->BG_RENDER_NEXT;
-            ppuBus->BG_RENDER_NEXT.BG_PATTERN_LOW = ppuBus->BG_RENDER_FETCH.BG_NEXT_LOW;
-            ppuBus->BG_RENDER_NEXT.BG_PATTERN_HIGH = ppuBus->BG_RENDER_FETCH.BG_NEXT_HIGH;
-            ppuBus->BG_RENDER_NEXT.BG_ATTR_LOW = (ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR & 0x01) ? 0xFF : 0x00;
-            ppuBus->BG_RENDER_NEXT.BG_ATTR_HIGH = (ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR & 0x02) ? 0xFF : 0x00;
+            ppuBus->BG_SHIFTER_PATTERN_LOW.combined    =     (ppuBus->BG_SHIFTER_PATTERN_LOW.combined & 0xFF00) | ppuBus->BG_RENDER_FETCH.BG_NEXT_LOW;
+            ppuBus->BG_SHIFTER_PATTERN_HIGH.combined   =     (ppuBus->BG_SHIFTER_PATTERN_HIGH.combined & 0xFF00) | ppuBus->BG_RENDER_FETCH.BG_NEXT_HIGH;
+            ppuBus->BG_SHIFTER_ATTR_LOW.combined       =     (ppuBus->BG_SHIFTER_ATTR_LOW.combined & 0xFF00) | (ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR & 0x01) ? 0xFF : 0x00;
+            ppuBus->BG_SHIFTER_ATTR_HIGH.NEXT          =     (ppuBus->BG_SHIFTER_ATTR_HIGH.combined & 0xFF00) | (ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR & 0x02) ? 0xFF : 0x00;
             if(ppuBus->PPUMASK.RENDER_BCKGRD || ppuBus->PPUMASK.RENDER_SPRTS)
             {
                 ppuBus->vRAM.CO_X = ppuBus->tempRAM.CO_X;
@@ -122,13 +118,13 @@ void PPU::tick()
 
     if(ppuBus->PPUMASK.RENDER_BCKGRD)
     {
-        BYTE pL = (ppuBus->BG_RENDER_CURRENT.BG_PATTERN_LOW & (0x80 >> ppuBus->FINE_X)) ? 1 : 0;
-        BYTE pH = (ppuBus->BG_RENDER_CURRENT.BG_PATTERN_HIGH & (0x80 >> ppuBus->FINE_X)) ? 1 : 0;
+        BYTE pL = (ppuBus->BG_SHIFTER_PATTERN_LOW.combined & (0x8000 >> ppuBus->FINE_X)) ? 1 : 0;
+        BYTE pH = (ppuBus->BG_SHIFTER_PATTERN_HIGH.combined & (0x8000 >> ppuBus->FINE_X)) ? 1 : 0;
 
         ppuBus->BG_PIXEL = (pH << 1) | pL;
 
-        pL = (ppuBus->BG_RENDER_CURRENT.BG_ATTR_LOW & (0x80 >> ppuBus->FINE_X)) ? 1 : 0;
-        pH = (ppuBus->BG_RENDER_CURRENT.BG_ATTR_HIGH & (0x80 >> ppuBus->FINE_X)) ? 1 : 0;
+        pL = (ppuBus->BG_SHIFTER_ATTR_LOW.combined & (0x8000 >> ppuBus->FINE_X)) ? 1 : 0;
+        pH = (ppuBus->BG_SHIFTER_ATTR_HIGH.combined & (0x8000 >> ppuBus->FINE_X)) ? 1 : 0;
 
         ppuBus->BG_PALETTE = (pH << 1) | pL;
 
@@ -139,13 +135,13 @@ void PPU::tick()
         ppuBus->BG_PALETTE = 0x00;
     }
 
-    if(row < 240 && col < 256 && row > -1 && col > -1)
+    if(row < 240 && col < 257 && row > -1 && col > 0)
         display->setPixel(col, row, ppuBus->colors[ ppuBus->readFromMemory(0x3F00 + (ppuBus->BG_PALETTE << 2) + ppuBus->BG_PIXEL) & 0x3F]);
     
-    if(++col > 340)
+    if(++col >= 341)
     {
         col = 0;
-        if(++row > 260)
+        if(++row >= 261)
         {
             row = -1;
             frameDone = true;
@@ -196,7 +192,7 @@ void PPU::getPatternTable()
 
 void PPU::log()
 {
-    fprintf(ppuLog,"%04X %04X %02X %d %d\n",ppuBus->vRAM.combined,ppuBus->tempRAM.combined,ppuBus->BG_RENDER_FETCH.BG_NEXT_ID,row,col);
+    fprintf(ppuLog,"VRAM:%04X TRAM:%04X TILE_ID:%02X SC:%d CY:%d SHIFTER:%04X MSB:%02X LSB:%02X\n",ppuBus->vRAM.combined,ppuBus->tempRAM.combined,ppuBus->BG_RENDER_FETCH.BG_NEXT_ID,row,col,ppuBus->BG_SHIFTER_PATTERN_HIGH.combined,ppuBus->BG_RENDER_FETCH.BG_NEXT_HIGH,ppuBus->BG_RENDER_FETCH.BG_NEXT_LOW);
 }
 
 

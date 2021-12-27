@@ -26,9 +26,7 @@ class PPUBus
         PIXEL_RGB colors[64];
         std::shared_ptr<MapperBase> mapper;
         bool addressToggle = false;
-        FLAG ppuBuffer = 0x00;
-        ADDRESS ppuAddress = 0x0000;
-        bool oddFrame = false;
+        BYTE ppuBuffer = 0x00;
         bool NMI = false;
         BYTE BG_PIXEL = 0x00;
         BYTE BG_PALETTE = 0x00;
@@ -85,15 +83,21 @@ class PPUBus
         BYTE BG_NEXT_ATTR = 0x00;
         } BG_RENDER_FETCH;
 
-        struct BG_RENDER_INFO
-        {
-            BYTE BG_PATTERN_LOW = 0x00;
-            BYTE BG_PATTERN_HIGH = 0x00;
-            BYTE BG_ATTR_LOW = 0x00;
-            BYTE BG_ATTR_HIGH = 0x00;
-        } BG_RENDER_CURRENT;
 
-        BG_RENDER_INFO BG_RENDER_NEXT =  { 0x00 , 0x00 , 0x00 , 0x00};
+        union SHIFTER
+        {
+            struct {
+                ADDRESS NEXT : 8;
+                ADDRESS CURRENT : 8;
+            };
+            ADDRESS combined = 0x0000;
+         } BG_SHIFTER_PATTERN_LOW;
+
+        SHIFTER BG_SHIFTER_PATTERN_HIGH;
+
+        SHIFTER BG_SHIFTER_ATTR_LOW;
+
+        SHIFTER BG_SHIFTER_ATTR_HIGH;
         union LOOPY
         {
             struct

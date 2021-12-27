@@ -18,9 +18,12 @@ class MapperBase
         virtual BYTE MapReadPpu(ADDRESS address) = 0;
         virtual void MapWritePpu(ADDRESS address,BYTE value) = 0;
         void setCartridge(Cartridge *cart) { cartridge = cart; };
+        void setMirroring(MIRRORING mirrorirngType) { mirroring = mirrorirngType; };
+        MIRRORING getMirroring() { return mirroring; };
     protected:
         BYTE PRGNum,CHRNum;
         Cartridge *cartridge;
+        MIRRORING mirroring = MIRRORING::HORIZONTAL;
 };
 
 

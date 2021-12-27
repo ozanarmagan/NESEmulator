@@ -53,6 +53,7 @@ void NES::insertNESFile(std::string fileName)
         cartridge.loadCHRData(CHRmem);
         cartridge.setMapperID(mapperID);
         setMapper();
+        mapper->setMirroring((header.mapper1 & 0x01) ? MIRRORING::VERTICAL : MIRRORING::HORIZONTAL);
         file.close();
     }   
     else
@@ -98,15 +99,16 @@ void NES::mainLoop()
 {
     while(1)
     {
-        while(!ppu.isFrameDone())
+        do
             tick();
+        while(!ppu.isFrameDone());
         display.renderFrame();
 #ifdef DEBUG
         display.renderDebugFrame();
 #endif
         ppu.clearFrameDone();
         ppu.getPatternTable();
-        controller.handleInput();
+        //controller.handleInput();
     }
 }
 
@@ -117,15 +119,15 @@ void NES::tick()
 
     ppu.tick();
 
+    if(clock % 3 == 0)
+        cpu.tick();
+    
     if(ppuBus.getNMI())
     {
         cpu.NMI();
         ppuBus.setNMI(false);
     }
-
-
-    if(clock++ % 3 == 0)
-        cpu.tick();
+    clock++;
 }
 
 

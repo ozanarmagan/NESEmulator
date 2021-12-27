@@ -12,7 +12,7 @@
 class Bus
 {
     public:
-        Bus(PPUBus& ppuBus) : ppuBus(ppuBus) { std::fill_n(memory, 2049, 0xCC); };
+        Bus(PPUBus& ppuBus) : ppuBus(ppuBus) {  };
         BYTE readFromMemory(ADDRESS address);
         void writeToMemory(ADDRESS address,BYTE value);
         void clearMemoryBlock(ADDRESS start,ADDRESS end);
@@ -21,10 +21,11 @@ class Bus
         void print(int end = 20);
     private:
         BYTE memory[2048]; // CPU RAM
-        BYTE controllerCache[2]; // Temporary cache to write in every frame
+        BYTE controllerCache[2] = {0xCC,0xCC}; // Temporary cache to write in every frame
         BYTE controllerMemory[2]; // Bytes for controllers
         PPUBus& ppuBus; 
         std::shared_ptr<MapperBase> mapper;
+
 
 };
 

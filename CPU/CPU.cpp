@@ -507,6 +507,9 @@ void CPU::tick()
 		logToFile();
 #endif
 
+		if(programCounter == 0xF216 && A == 0x2C)
+			std::cout << "hey";
+
 		currentOpCode = bus.readFromMemory(programCounter++); // Fetch
 
 		currentInstruction = table[currentOpCode]; // Decode 

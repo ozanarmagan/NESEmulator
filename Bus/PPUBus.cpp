@@ -67,6 +67,10 @@ PPUBus::PPUBus()
 	colors[0x3D] = {160, 162, 160};
 	colors[0x3E] = {0, 0, 0};
 	colors[0x3F] = {0, 0, 0};
+
+	vRAM.combined = 0x0000;
+	tempRAM.combined = 0x0000;
+
 }
 
 
@@ -78,10 +82,33 @@ void PPUBus::setMapper(std::shared_ptr<MapperBase> _mapper)
 
 BYTE PPUBus::readFromMemory(ADDRESS address)
 {
+	address &= 0x3FFF;
 	if(address >= 0x0000 && address <= 0x1FFF)
 		return mapper->MapReadPpu(address);
 	else if(address >= 0x2000 && address <= 0x3EFF)
-	{return 0x00;}
+	{
+		address &= 0x0FFF;
+		if(mapper->getMirroring() == MIRRORING::VERTICAL)
+		{
+			if(address< 0x0000)
+				return 0x00;
+			else 
+				return nameTables[address % 0x800];
+		}
+		else if(mapper->getMirroring() == MIRRORING::HORIZONTAL)
+		{
+			if(address< 0x0000)
+				return 0x00;
+			else if(address <= 0x07FF)
+				return nameTables[address % 1024];
+			else if(address <= 0x0FFF)
+				return nameTables[(address % 1024) + 1024];
+			else
+				return 0x10;
+		}
+		else
+			return 0x00;
+	}
 	else if(address >= 0x3F00 && address <= 0x3FFF)
 	{
 		address &= 0x001F;
@@ -98,10 +125,28 @@ BYTE PPUBus::readFromMemory(ADDRESS address)
 
 void PPUBus::writeToMemory(ADDRESS address,BYTE value)
 {
+	address &= 0x3FFF;
 	if(address >= 0x0000 && address <= 0x1FFF)
 		mapper->MapWritePpu(address,value);
 	else if(address >= 0x2000 && address <= 0x3EFF)
-	{}
+	{
+		address &= 0x0FFF;
+		if(mapper->getMirroring() == MIRRORING::VERTICAL)
+		{
+			if(address< 0x0000)
+				return;
+				nameTables[address % 0x800] = value;
+		}
+		else if(mapper->getMirroring() == MIRRORING::HORIZONTAL)
+		{
+			if(address< 0x0000)
+				return;
+			else if(address <= 0x07FF)
+				nameTables[address & 0x3FF] = value;
+			else if(address <= 0x0FFF)
+				nameTables[(address % 1024) + 1024] = value;
+		}
+	}
 	else if(address >= 0x3F00 && address <= 0x3FFF)
 	{
 		address &= 0x001F;
@@ -117,16 +162,19 @@ void PPUBus::writeToMemory(ADDRESS address,BYTE value)
 BYTE PPUBus::readFromMemory_mainBus(ADDRESS address)
 {
 	if(address == 0x0000)
-	{	}
+	{	
+		return 0x00;
+	}
 	else if(address == 0x0001)
-	{	}
+	{	
+		return 0x00;
+	}
 	else if(address == 0x0002)
 	{	
-		BYTE temp =  (PPUSTATUS.combined & 0xE0) | (ppuBuffer & 0x1F);
-
-
+		BYTE temp = (PPUSTATUS.combined & 0xE0) | (ppuBuffer & 0x1F);
 		PPUSTATUS.VBLANK = 0;
-		ppuAddress = 0;
+		addressToggle = false;
+
 		return temp;
 	}
 	else if(address == 0x0003)
@@ -140,10 +188,10 @@ BYTE PPUBus::readFromMemory_mainBus(ADDRESS address)
 	else if(address == 0x0007)
 	{
 		BYTE data = ppuBuffer;
-		ppuBuffer = readFromMemory(ppuAddress);
+		ppuBuffer = readFromMemory(vRAM.combined);
 
-		if(ppuAddress >= 0x3F00) return ppuBuffer;
-		ppuAddress++;
+		if(vRAM.combined >= 0x3F00) return ppuBuffer;
+		vRAM.combined += (PPUCTRL.INCREMENT_MODE ? 32 : 1);
 		return data;
 	}
 
@@ -158,6 +206,8 @@ void PPUBus::writeToMemory_mainBus(ADDRESS address,BYTE value)
 	if(address == 0x0000)
 	{
 		PPUCTRL.combined = value;
+		tempRAM.NT_X = PPUCTRL.NAMETABLE_X;
+		tempRAM.NT_Y = PPUCTRL.NAMETABLE_Y;
 	}
 	else if(address == 0x0001)
 	{
@@ -172,24 +222,38 @@ void PPUBus::writeToMemory_mainBus(ADDRESS address,BYTE value)
 	else if(address == 0x0004)
 	{	}
 	else if(address == 0x0005)
-	{	}
-	else if(address == 0x0006)
 	{
-		if(addressToggle == 0)
+		if(!addressToggle)
 		{
-			ppuAddress = (ppuAddress & 0x00FF) | (value << 8);
-			addressToggle = 1;
+			FINE_X = value & 0x07;
+			tempRAM.CO_X = value >> 3;
+			addressToggle = true;
 		}
 		else
 		{
-			ppuAddress = (ppuAddress & 0xFF00) | value;
-			addressToggle = 0;
+			tempRAM.FINE_Y = value & 0x07;
+			tempRAM.CO_Y = value >> 3;
+			addressToggle = false;
+		}
+	}
+	else if(address == 0x0006)
+	{
+		if(!addressToggle)
+		{
+			tempRAM.combined = (ADDRESS)((value & 0x3F) << 8) | (tempRAM.combined & 0x00FF);
+			addressToggle = true;
+		}
+		else
+		{
+			tempRAM.combined = (tempRAM.combined & 0xFF00) | value;
+			vRAM = tempRAM;
+			addressToggle = false;
 		}
 
 	}
 	else if(address == 0x0007)
 	{
-		writeToMemory(ppuAddress,value);
-		ppuAddress++;
+		writeToMemory(vRAM.combined,value);
+		vRAM.combined += (PPUCTRL.INCREMENT_MODE ? 32 : 1);
 	}
 }

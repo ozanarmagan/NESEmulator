@@ -507,8 +507,7 @@ void CPU::tick()
 		logToFile();
 #endif
 
-		if(programCounter == 0xF216 && A == 0x2C)
-			std::cout << "hey";
+
 
 		currentOpCode = bus.readFromMemory(programCounter++); // Fetch
 
@@ -700,15 +699,15 @@ CPU::OPEXEC CPU::AND(ADDRESS source)
 
 CPU::OPEXEC CPU::ASL(ADDRESS source)
 {
-	ADDRESS data = currentInstruction.addr == &CPU::IMP ? (ADDRESS) A : bus.readFromMemory(source);
+	ADDRESS data = (ADDRESS)((currentInstruction.addr == &CPU::IMP) ?  A : bus.readFromMemory(source));
 	data <<= 1;
-	STATUS.CARRY = (data > 0xFF) ? 1 : 0;
+	STATUS.CARRY = (data & 0xFF00)  ? 1 : 0;
 	STATUS.ZERO = (data & 0x00FF) == 0 ? 1 : 0;
-	STATUS.NEGATIVE = 0;
+	STATUS.NEGATIVE = (data & 0x80) ? 1 : 0;
 	if(currentInstruction.addr == &CPU::IMP)
-		A = data & 0x00FF;
+		A = data % 256;
 	else
-		bus.writeToMemory(source,data);
+		bus.writeToMemory(source,data % 256);
 };
 
 
@@ -748,9 +747,9 @@ CPU::OPEXEC CPU::BEQ(ADDRESS source)
 CPU::OPEXEC CPU::BIT(ADDRESS source)
 {
 	ADDRESS data = bus.readFromMemory(source);
-	STATUS.ZERO = (data & A) == 0 ? 1 : 0; 
-	STATUS.NEGATIVE = (data & 0x80) ? 1 : 0;
-	STATUS.OVERFLOW = CHECK_BIT(data,6) == 1 ? 1 : 0;
+	STATUS.ZERO = ((ADDRESS)(A & data) & 0x00FF) == 0x00 ? 1 : 0; 
+	STATUS.NEGATIVE = (data & (1 << 7)) ? 1 : 0;
+	STATUS.OVERFLOW = (data & (1 << 6)) ? 1 : 0;
 };
 
 CPU::OPEXEC CPU::BMI(ADDRESS source)
@@ -843,19 +842,19 @@ CPU::OPEXEC CPU::CLV(ADDRESS source)
 CPU::OPEXEC CPU::CMP(ADDRESS source)
 {
 	BYTE data = bus.readFromMemory(source);
-	BYTE temp = A - data;
+	ADDRESS temp = (ADDRESS)A - (ADDRESS)data;
 	STATUS.CARRY = (A >= data) ? 1 : 0;
-	STATUS.NEGATIVE = (0x80 & temp) ? 1 : 0;
-	STATUS.ZERO = (temp & 0xFF) ? 0 : 1;
+	STATUS.NEGATIVE = (0x0080 & temp) ? 1 : 0;
+	STATUS.ZERO = (temp & 0x00FF) == 0x0000 ? 1 : 0;
 	additionalCycle1++;
 };
 
 CPU::OPEXEC CPU::CPX(ADDRESS source)
 {
 	BYTE data = bus.readFromMemory(source);
-	BYTE temp = X - data;
+	ADDRESS temp = (ADDRESS)X - (ADDRESS)data;
 	STATUS.CARRY = (X >= data) ? 1 : 0;
-	STATUS.NEGATIVE = (0x80 & temp) ? 1 : 0;
+	STATUS.NEGATIVE = (0x0080 & temp) ? 1 : 0;
 	STATUS.ZERO = (temp & 0x00FF) == 0x0000 ? 1 : 0;
 	additionalCycle1++;
 };
@@ -863,9 +862,9 @@ CPU::OPEXEC CPU::CPX(ADDRESS source)
 CPU::OPEXEC CPU::CPY(ADDRESS source)
 {
 	BYTE data = bus.readFromMemory(source);
-	BYTE temp = Y - data;
+	ADDRESS temp = (ADDRESS)Y - (ADDRESS)data;
 	STATUS.CARRY = (Y >= data) ? 1 : 0;
-	STATUS.NEGATIVE = (0x80 & temp) ? 1 : 0;
+	STATUS.NEGATIVE = (0x0080 & temp) ? 1 : 0;
 	STATUS.ZERO = (temp & 0x00FF) == 0x0000 ? 1 : 0;
 	additionalCycle1++;
 };
@@ -993,7 +992,11 @@ CPU::OPEXEC CPU::PHA(ADDRESS source)
 
 CPU::OPEXEC CPU::PHP(ADDRESS source)
 {
+	STATUS.BREAK = 1;
+	STATUS.UNUSED = 1;
 	push(STATUS.combined);	
+	STATUS.BREAK = 0;
+	STATUS.UNUSED = 0;
 };
 
 CPU::OPEXEC CPU::PLA(ADDRESS source)

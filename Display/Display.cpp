@@ -28,7 +28,7 @@ void Display::init()
     else
         std::cout << "SDL Window created!\n",
 
-    SDL_SetWindowBordered(window,SDL_FALSE);
+    //SDL_SetWindowBordered(window,SDL_FALSE);
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
 
     texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, RENDER_WIDTH, RENDER_HEIGHT);
@@ -58,6 +58,11 @@ void Display::renderFrame()
     SDL_RenderCopy(renderer, texture, NULL, NULL);
     SDL_RenderPresent(renderer);
 
+    interval1 = interval0;
+    interval0 = SDL_GetTicks64();
+
+    SDL_SetWindowTitle(window,(string("NES Emulator FPS: " + std::to_string(1000.0 / (interval0 - interval1)))).c_str());
+
     while(SDL_PollEvent(eventPtr))
     {
         switch (eventPtr->type)
@@ -66,21 +71,15 @@ void Display::renderFrame()
                 std::cout << "LOG: Quit has called! Good bye!\n";
                 exit(1);
                 break;
-            case SDL_KEYDOWN:
-                controller.setKeyStatus(eventPtr->key.keysym.scancode);
-                break;
-            case SDL_KEYUP:
-                controller.clearKeyStatus(eventPtr->key.keysym.scancode);
-                break;
             default:
                 break;
             }
     }
-    SDL_Delay(1000/60);
+
 }
 
 
-
+#ifdef DEBUG 
 void Display::initDebug()
 {
     debugWindow = SDL_CreateWindow("DEBUG WINDOW", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, DEBUG_WIDTH * 2 , DEBUG_HEIGHT * 2 , 0);
@@ -101,10 +100,13 @@ void Display::initDebug()
 
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 
+
     for(int i = 0;i < DEBUG_HEIGHT;i++)
         for(int j = 0;j < DEBUG_WIDTH;j++)
             setPixelDebug(i,j,{84,84,84});
 }
+
+#endif
 
 #ifdef DEBUG
 void Display::renderDebugFrame()
@@ -118,10 +120,10 @@ void Display::renderDebugFrame()
         switch (eventPtr->type)
             {
             case SDL_KEYDOWN:
-                controller.setKeyStatus(eventPtr->key.keysym.sym);
+                controller.setKeyStatus(eventPtr->key.keysym.scancode);
                 break;
             case SDL_KEYUP:
-                controller.clearKeyStatus(eventPtr->key.keysym.sym);
+                controller.clearKeyStatus(eventPtr->key.keysym.scancode);
                 break;
             default:
                 break;

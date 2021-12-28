@@ -161,6 +161,8 @@ std::ostream& operator<<(std::ostream &out,PPU &ppu)
     return out;
 }
 
+
+#ifdef DEBUG
 void PPU::getPatternTable()
 {
     for(ADDRESS tileY = 0; tileY < 16; tileY++)
@@ -187,7 +189,7 @@ void PPU::getPatternTable()
             }
         }
 }
-
+#endif
 
 #ifdef PPUDEBUG
 

@@ -29,6 +29,7 @@ using std::string;
 typedef uint8_t BYTE;
 typedef uint16_t ADDRESS;
 typedef uint32_t PIXEL;
+typedef uint64_t TIME;
 typedef uint8_t FLAG;
 
 struct FileHeader  // iNES File Header

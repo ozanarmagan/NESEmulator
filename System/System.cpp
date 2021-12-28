@@ -127,6 +127,9 @@ void NES::tick()
         cpu.NMI();
         ppuBus.setNMI(false);
     }
+
+    controller.handleInput();
+
     clock++;
 }
 

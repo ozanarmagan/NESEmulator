@@ -5,7 +5,6 @@
 #include "../Controller/Controller.h"
 #include <SDL2/SDL.h>
 
-#define DEBUG
 
 class Display
 {
@@ -32,6 +31,7 @@ class Display
         SDL_Texture *Dtexture;
         SDL_Event *eventPtr;
         Controller& controller;
+        TIME interval0 = 0,interval1 = 0;
 };
 
 #endif

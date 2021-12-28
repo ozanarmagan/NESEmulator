@@ -9,13 +9,13 @@
 class Controller
 {
     public: 
-        Controller(Bus* bus);
-        void setKeyStatus(int index) { keys[index] = true; };
-        void clearKeyStatus(int index) { keys[index] = false; };
+        Controller(Bus* bus) : bus(bus) {   };
         bool getKeyStatus(int index) { return keys[index]; };
+        void setKeys(const BYTE* keys_) { keys = keys_; };
         void handleInput();
     private:
-        bool keys[512]; //SDL Keys
+        void getKeyState() {const BYTE* keys_ = SDL_GetKeyboardState(NULL);keys = keys_;};
+        const BYTE *keys; //SDL Keys
         Bus* bus;
 };
 

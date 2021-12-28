@@ -67,7 +67,7 @@ void NES::setMapper()
 {
     switch (cartridge.getMapperID())
     {
-    case 0:mapper = std::make_shared<Mapper0>(cartridge.getPRGNum(), cartridge.getCHRNum(),&cartridge);break;   
+    case 0:mapper = std::make_shared<Mapper0>(&cartridge);break;   
     default:
         break;
     }
@@ -104,11 +104,11 @@ void NES::mainLoop()
         while(!ppu.isFrameDone());
         display.renderFrame();
 #ifdef DEBUG
+        ppu.getPatternTable();
         display.renderDebugFrame();
 #endif
         ppu.clearFrameDone();
-        ppu.getPatternTable();
-        //controller.handleInput();
+        controller.handleInput();
     }
 }
 

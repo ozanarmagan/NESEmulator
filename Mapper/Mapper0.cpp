@@ -1,6 +1,6 @@
 #include "Mapper0.h"
 
-Mapper0::Mapper0(BYTE PRGNum,BYTE CHRNum,Cartridge* cart) : MapperBase(PRGNum,CHRNum,cart)
+Mapper0::Mapper0(Cartridge* cart) : MapperBase(cart)
 {  }
 
 BYTE Mapper0::MapReadCpu(ADDRESS address)

@@ -10,11 +10,12 @@ void PPU::tick()
 
 
 
+
     if(row >= -1 && row < 240)
     {
         if(row == 0 && col == 0)
             col = 1;
-        if(row == -1 && col == -1)
+        if(row == -1 && col == 1)
             ppuBus->PPUSTATUS.VBLANK = 0;
         if((col >= 2 && col < 258) || (col >= 321 && col < 338))
         {
@@ -98,7 +99,7 @@ void PPU::tick()
             }
         }
         if(col == 338 || col == 340)
-            ppuBus->BG_RENDER_FETCH.BG_NEXT_ID = ppuBus->readFromMemory(0x2000 | (ppuBus->vRAM.combined & 0x0FF));
+            ppuBus->BG_RENDER_FETCH.BG_NEXT_ID = ppuBus->readFromMemory(0x2000 | (ppuBus->vRAM.combined & 0x0FFF));
         if(row == -1 && col >= 280 && col < 305)
             if(ppuBus->PPUMASK.RENDER_BCKGRD || ppuBus->PPUMASK.RENDER_SPRTS)
             {

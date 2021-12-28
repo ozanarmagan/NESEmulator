@@ -12,7 +12,7 @@
 class MapperBase
 {
     public:
-        MapperBase(BYTE PRGNum,BYTE CHRNu,Cartridge *cartridge_): PRGNum(PRGNum),CHRNum(CHRNum),cartridge(cartridge_) {    };
+        MapperBase(Cartridge *cartridge_): cartridge(cartridge_) {    };
         virtual BYTE MapReadCpu(ADDRESS address) = 0;
         virtual void MapWriteCpu(ADDRESS address,BYTE value) = 0;
         virtual BYTE MapReadPpu(ADDRESS address) = 0;
@@ -21,7 +21,6 @@ class MapperBase
         void setMirroring(MIRRORING mirrorirngType) { mirroring = mirrorirngType; };
         MIRRORING getMirroring() { return mirroring; };
     protected:
-        BYTE PRGNum,CHRNum;
         Cartridge *cartridge;
         MIRRORING mirroring = MIRRORING::HORIZONTAL;
 };

@@ -3,17 +3,12 @@
 
 //#define CPUDEBUG
 
-#include <functional>
-
-using std::function;
-
 #include "../Utils/handler.h"
 #include "../Bus/Bus.h"
 
 #ifdef CPUDEBUG
 
 #include <stdio.h>
-#include <thread>
 
 #endif
 

@@ -2,7 +2,7 @@
 #define BUS_H
 
 #include <memory>
-#include <algorithm>
+
 #include "../Utils/handler.h"
 #include "PPUBus.h"
 #include "../Cartridge/Cartridge.h"

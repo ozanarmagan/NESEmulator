@@ -1,8 +1,6 @@
 #ifndef CARTRIDGE_H
 #define CARTRIDGE_H
 
-#include <iostream>
-#include <vector>
 #include "../Utils/handler.h"
 
 

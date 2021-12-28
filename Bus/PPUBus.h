@@ -1,10 +1,11 @@
 #ifndef PPUBUS_H
 #define PPUBUS_H
 
+#include <memory>
+
 #include "../Utils/handler.h"
 #include "../Mapper/MapperBase.h"
-#include <memory>
-#include <algorithm>
+
 
 class PPUBus
 {

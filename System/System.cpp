@@ -109,7 +109,6 @@ void NES::mainLoop()
         display.renderDebugFrame();
 #endif
         ppu.clearFrameDone();
-        controller.handleInput();
     }
 }
 
@@ -120,7 +119,7 @@ void NES::tick()
 
     ppu.tick();
 
-    
+    //controller.handleInput();
     if(clock % 3 == 0)
     {
         if(bus.getDMAStatus())
@@ -129,13 +128,13 @@ void NES::tick()
             cpu.tick();
     }
     
+
     if(ppuBus.getNMI())
     {
         cpu.NMI();
         ppuBus.setNMI(false);
     }
 
-    controller.handleInput();
 
     clock++;
 }

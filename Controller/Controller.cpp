@@ -3,7 +3,7 @@
 
 #include "Controller.h"
 
-Controller::Controller(Bus* bus,SDL_Event* event) : bus(bus),eventPtr(event) { 
+Controller::Controller(Bus* bus) : bus(bus) { 
     if(SDL_NumJoysticks() > 0) 
     {
         contorller1 = SDL_GameControllerOpen(0);
@@ -145,7 +145,6 @@ void Controller::clearJoyButton(int id,int which)
 
 void Controller::setJoyAxis(int id,int value,int which)
 {
-    std::cout << id << " " << value << std::endl;
     switch(id)
     {
         case SDL_CONTROLLER_AXIS_LEFTY:  

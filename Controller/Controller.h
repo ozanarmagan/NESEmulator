@@ -9,7 +9,7 @@
 class Controller
 {
     public: 
-        Controller(Bus* bus,SDL_Event* event);
+        Controller(Bus* bus);
         bool getKeyStatus(int index) { return keys[index]; };
         void setKeys(const BYTE* keys_) { keys = keys_; };
         void setJoyButton(int id,int which);
@@ -21,7 +21,6 @@ class Controller
 
         const BYTE *keys; //SDL Keys
         Bus* bus;
-        SDL_Event* eventPtr;
         BYTE controllerStatus[2] = {0x00, 0x00};
         SDL_GameController *contorller1 = nullptr;
         SDL_GameController *contorller2 = nullptr;

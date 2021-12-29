@@ -71,12 +71,18 @@ void Display::renderFrame()
                 std::cout << "LOG: Quit has called! Good bye!\n";
                 exit(1);
                 break;
+            case SDL_CONTROLLERBUTTONDOWN:
+                controller.setJoyButton(eventPtr->cbutton.button,eventPtr->cbutton.which);
+                break;
+            case SDL_CONTROLLERBUTTONUP:
+                controller.clearJoyButton(eventPtr->cbutton.button,eventPtr->cbutton.which);
+                break;
             default:
                 break;
             }
     }
 
-    SDL_Delay(1000/70);
+    SDL_Delay(1000/80);
 
 }
 

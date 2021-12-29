@@ -46,6 +46,8 @@ class PPU
         void shift();
         BYTE pixel = 0x00;
         BYTE palette = 0x00;
+        bool spriteZeroIndicator = false;
+        bool spriteZero = false;
 
 #ifdef PPUDEBUG
         FILE* ppuLog;

@@ -76,6 +76,8 @@ void Display::renderFrame()
             }
     }
 
+    SDL_Delay(1000/70);
+
 }
 
 

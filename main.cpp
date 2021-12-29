@@ -2,14 +2,14 @@
 #include "System/System.h"
 
 
-int WinMain(int argc,char** argv)
+int main(int argc,char** argv)
 {
 
 
     if(argc < 2)
         std::cout << "No NES File to read!";
     
-    string fn = string("smb.nes");
+    string fn = string(argv[1]);
 
     NES nes(fn);
 

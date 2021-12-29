@@ -35,8 +35,6 @@ BYTE Bus::readFromMemory(ADDRESS address)
 
 void Bus::writeToMemory(ADDRESS address,BYTE value) 
 {
-    if(address == 516)
-        std::cout << "hey";
     if(address >= 0x0000 && address <= 0x1FFF)
         memory[address & 0x07FF] = value;
     else if(address >= 0x2000 && address <= 0x3FFF)

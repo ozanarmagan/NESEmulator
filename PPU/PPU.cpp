@@ -40,6 +40,7 @@ void PPU::tick()
         if(row == -1 && col == 1)
         {
             ppuBus->PPUSTATUS.VBLANK = 0;
+            ppuBus->PPUSTATUS.SPRT_ZERO_HIT = 0;
             ppuBus->PPUSTATUS.SPRT_OVERFLOW = 0;
             for(auto element : ppuBus->SPRT_SHIFTER_LOW)
                 element = 0;
@@ -139,13 +140,18 @@ void PPU::tick()
             for(auto element : ppuBus->SPRT_SHIFTER_HIGH)
                 element = 0;
 
+            spriteZeroIndicator = false;
+
             for(int i = 0;i < 64 && nextRowSprites.getSize() < 9;i++)
             {
                 ADDRESS offset = ((ADDRESS)row - ((ADDRESS)ppuBus->OAM[i].y));
                 if(offset >= 0 && offset < (ppuBus->PPUCTRL.SPRT_SIZE ? 16 : 8))
                 {
                     if(nextRowSprites.getSize() < 8)
+                    {
+                        spriteZeroIndicator = true;
                         nextRowSprites.add(ppuBus->OAM[i]);
+                    }
                     
                 }
             }
@@ -232,6 +238,7 @@ void PPU::tick()
 
     if(ppuBus->PPUMASK.RENDER_SPRTS) // Check foreground 
     {
+        spriteZero = false;
         for(int i = 0;i < nextRowSprites.getSize(); i++)
         {
             if(nextRowSprites[i].x == 0)
@@ -244,7 +251,11 @@ void PPU::tick()
                 ppuBus->FG_PRIORITY = (nextRowSprites[i].attribute & 0x20) == 0;
 
                 if(ppuBus->FG_PIXEL != 0)
+                {
+                    if(i == 0)
+                        spriteZero = true;
                     break;
+                }
             }
         }
     }
@@ -270,6 +281,15 @@ void PPU::tick()
     {
         pixel = ((ppuBus->FG_PRIORITY) ? ppuBus->FG_PIXEL : ppuBus->BG_PIXEL);
         palette = ((ppuBus->FG_PRIORITY) ? ppuBus->FG_PALETTE : ppuBus->BG_PALETTE);
+
+        if(spriteZero && spriteZeroIndicator && col < 258) 
+            if(ppuBus->PPUMASK.RENDER_BCKGRD & ppuBus->PPUMASK.RENDER_SPRTS)
+                if(~(ppuBus->PPUMASK.RENDER_BCKGRND_LEFT | ppuBus->PPUMASK.RENDER_SPRTS_LEFT))
+                    if(col > 8)
+                        ppuBus->PPUSTATUS.SPRT_ZERO_HIT = 1;
+                else if(col > 0)
+                        ppuBus->PPUSTATUS.SPRT_ZERO_HIT = 1;
+                
     }
 
 

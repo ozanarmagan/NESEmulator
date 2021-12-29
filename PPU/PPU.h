@@ -9,13 +9,15 @@
 #include "../Cartridge/Cartridge.h"
 #include "../Bus/PPUBus.h"
 #include "../Display/Display.h"
-
+#include "../Utils/Array.h"
 
 #ifdef PPUDEBUG
 
 #include <stdio.h>
 
 #endif
+
+
 
 
 class PPU
@@ -39,9 +41,12 @@ class PPU
         Display* display;
         BYTE PPU_BUFFER;
         short int col = 0,row = 0;
-        BYTE OFFSET_X = 0;
         bool frameDone = false;
-        bool oddFrame = false;
+        Array<OBJECT_ATTRIBUTE> nextRowSprites; 
+        void shift();
+        BYTE pixel = 0x00;
+        BYTE palette = 0x00;
+
 #ifdef PPUDEBUG
         FILE* ppuLog;
         void log();

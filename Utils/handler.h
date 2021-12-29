@@ -60,6 +60,13 @@ enum class MIRRORING {
     HORIZONTAL,VERTICAL,FOURSCREENS,ONSCREENLOWER,ONSCREENHIGHER
 };
 
+struct OBJECT_ATTRIBUTE
+{
+    BYTE y,id,attribute,x;
+};
+
+
+void reverseByte(BYTE* byte);
 
 
 #endif

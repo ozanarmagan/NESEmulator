@@ -13,6 +13,7 @@ namespace{
 
 NES::NES() : cartridge(),ppuBus(),bus(ppuBus),ppu(&display,&bus,&cartridge,&ppuBus),cpu(bus),controller(&bus),display(&events,controller)
 {
+
 }
 
 NES::NES(std::string fileName) : cartridge(),ppuBus(),bus(ppuBus),ppu(&display,&bus,&cartridge,&ppuBus),cpu(bus),controller(&bus),display(&events,controller)
@@ -119,8 +120,14 @@ void NES::tick()
 
     ppu.tick();
 
+    
     if(clock % 3 == 0)
-        cpu.tick();
+    {
+        if(bus.getDMAStatus())
+            DMA();
+        else
+            cpu.tick();
+    }
     
     if(ppuBus.getNMI())
     {
@@ -131,6 +138,31 @@ void NES::tick()
     controller.handleInput();
 
     clock++;
+}
+
+
+void NES::DMA() // Direct Memory Access 
+{
+    if(bus.DMA_dummy)
+    {
+        if(clock % 2 == 1)
+            bus.DMA_dummy = false;
+    }
+    else
+    {
+        if(clock % 2 == 0)
+            bus.DMAReadNext();
+        else
+        {
+            bus.writeOAM();
+            
+            if(bus.DMA_low == 0x00)
+            {
+                bus.DMA = false;
+                bus.DMA_dummy = true;
+            }
+        }
+    }
 }
 
 

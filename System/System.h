@@ -1,5 +1,5 @@
+
 #include <fstream>
-#include <thread>
 
 #include "../Utils/handler.h"
 #include "../Cartridge/Cartridge.h"
@@ -31,6 +31,7 @@ class NES
         void setMapper();
         void mainLoop();
         void tick();
+        void DMA();
         uint64_t clock = 0;
         SDL_Event events;
         Controller controller;

@@ -173,7 +173,7 @@ BYTE PPUBus::readFromMemory_mainBus(ADDRESS address)
 	}
 	else if(address == 0x0001)
 	{	
-		return 0x00;
+		//return OAM_offset;
 	}
 	else if(address == 0x0002)
 	{	
@@ -186,7 +186,7 @@ BYTE PPUBus::readFromMemory_mainBus(ADDRESS address)
 	else if(address == 0x0003)
 	{	}
 	else if(address == 0x0004)
-	{	}
+		return ((BYTE*)&OAM)[OAM_offset];
 	else if(address == 0x0005)
 	{	}
 	else if(address == 0x0006)
@@ -216,17 +216,15 @@ void PPUBus::writeToMemory_mainBus(ADDRESS address,BYTE value)
 		tempRAM.NT_Y = PPUCTRL.NAMETABLE_Y;
 	}
 	else if(address == 0x0001)
-	{
 		PPUMASK.combined = value;
-	}
 	else if(address == 0x0002)
 	{
 		
 	}
 	else if(address == 0x0003)
-	{	}
+		OAM_offset = value;
 	else if(address == 0x0004)
-	{	}
+		((BYTE*)OAM)[OAM_offset] = value;
 	else if(address == 0x0005)
 	{
 		if(!addressToggle)

@@ -9,7 +9,7 @@ int WinMain(int argc,char** argv)
     if(argc < 2)
         std::cout << "No NES File to read!";
     
-    string fn = string("donkey kong.nes");
+    string fn = string("smb.nes");
 
     NES nes(fn);
 

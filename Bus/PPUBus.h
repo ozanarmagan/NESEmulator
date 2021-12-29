@@ -5,7 +5,7 @@
 
 #include "../Utils/handler.h"
 #include "../Mapper/MapperBase.h"
-
+#include "../Utils/Array.h"
 
 class PPUBus
 {
@@ -18,10 +18,11 @@ class PPUBus
         void setMapper(std::shared_ptr<MapperBase> _mapper);
         bool getNMI() const {return NMI; };
         void setNMI(bool val) { NMI = val; };
+        void writeOAM(BYTE address,BYTE value) { ((BYTE*)OAM)[address] = value; };
+        BYTE getOAMOffset() const { return OAM_offset; };
         friend class PPU;
         friend class Bus;
     private:
-    
         BYTE nameTables[2048];
         BYTE palettes[32];
         PIXEL_RGB colors[64];
@@ -31,7 +32,9 @@ class PPUBus
         bool NMI = false;
         BYTE BG_PIXEL = 0x00;
         BYTE BG_PALETTE = 0x00;
-
+        BYTE FG_PIXEL = 0x00;
+        BYTE FG_PALETTE = 0x00;
+        BYTE FG_PRIORITY = 0x00;
         
         union
         {
@@ -116,6 +119,14 @@ class PPUBus
         LOOPY vRAM;
         LOOPY tempRAM;
         BYTE FINE_X = 0x00;
+
+        OBJECT_ATTRIBUTE OAM[64];
+        BYTE OAM_offset = 0x00;
+
+        Array<BYTE> SPRT_SHIFTER_LOW  = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+        Array<BYTE> SPRT_SHIFTER_HIGH = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};;
+        BYTE SPRT_PATTERN_LOW = 0x00,SPRT_PATTERN_HIGH = 0x00;
+        ADDRESS SPRT_PATTERN_ADDR_L = 0x0000;
 };
 
 

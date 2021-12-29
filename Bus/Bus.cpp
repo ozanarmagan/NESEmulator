@@ -35,10 +35,18 @@ BYTE Bus::readFromMemory(ADDRESS address)
 
 void Bus::writeToMemory(ADDRESS address,BYTE value) 
 {
+    if(address == 516)
+        std::cout << "hey";
     if(address >= 0x0000 && address <= 0x1FFF)
         memory[address & 0x07FF] = value;
     else if(address >= 0x2000 && address <= 0x3FFF)
         ppuBus.writeToMemory_mainBus(address & 0x0007,value);
+    else if(address == 0x4014) // DMA Activated
+    {
+        DMA = true;
+        DMA_low = 0x00;
+        DMA_high = value;
+    }
     else if(address >= 0x4016 && address <= 0x4017)
         controllerMemory[address & 0x0001] = controllerCache[address & 0x0001];
     else if(address >= 0x6000 && address <= 0xFFFF)

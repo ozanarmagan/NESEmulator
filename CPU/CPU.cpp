@@ -501,13 +501,16 @@ BYTE CPU::pop()
 
 void CPU::tick()
 {
+
+	if(bus.getDMAStatus())
+		return;
+
 	if(cycleRemaining == 0)
 	{
+
 #ifdef CPUDEBUG
 		logToFile();
 #endif
-
-
 
 		currentOpCode = bus.readFromMemory(programCounter++); // Fetch
 
@@ -692,7 +695,7 @@ CPU::OPEXEC CPU::ADC(ADDRESS source)
 CPU::OPEXEC CPU::AND(ADDRESS source)
 {
 	A = A & bus.readFromMemory(source);
-	STATUS.ZERO = (A & 0xFF) == 0 ? 1 : 0;
+	STATUS.ZERO = (A == 0) ? 1 : 0;
 	STATUS.NEGATIVE = (A & 0x80) ? 1 : 0;
 	additionalCycle1++;
 };
@@ -1059,10 +1062,11 @@ CPU::OPEXEC CPU::RTS(ADDRESS source)
 {
 	BYTE low,high;
 
-	low = pop();
+	programCounter = pop();
 	high = pop();
 
-	programCounter = ((high << 8) | low) + 1;
+	programCounter |= (ADDRESS)(high) << 8;
+	programCounter++;
 };
 
 CPU::OPEXEC CPU::SBC(ADDRESS source)

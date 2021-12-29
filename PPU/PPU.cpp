@@ -1,6 +1,29 @@
 #include "PPU.h"
 
 
+void PPU::shift()
+{
+    if(ppuBus->PPUMASK.RENDER_BCKGRD == 1)
+    {
+        ppuBus->BG_SHIFTER_PATTERN_LOW.combined     <<= 1;
+        ppuBus->BG_SHIFTER_PATTERN_HIGH.combined    <<= 1;
+        ppuBus->BG_SHIFTER_ATTR_LOW.combined        <<= 1;
+        ppuBus->BG_SHIFTER_ATTR_HIGH.combined       <<= 1;
+    }
+
+    if(ppuBus->PPUMASK.RENDER_SPRTS && col >= 1 && col <= 257)
+        for(int i = 0;i < nextRowSprites.getSize();i++)
+        {
+            if(nextRowSprites[i].x > 0) nextRowSprites[i].x--;
+            else
+            {
+                ppuBus->SPRT_SHIFTER_LOW[i]  <<= 1;
+                ppuBus->SPRT_SHIFTER_HIGH[i] <<= 1;
+            }
+        }
+}
+
+
 void PPU::tick()
 {
 
@@ -10,30 +33,30 @@ void PPU::tick()
 
 
 
-
     if(row >= -1 && row < 240)
     {
         if(row == 0 && col == 0)
             col = 1;
         if(row == -1 && col == 1)
+        {
             ppuBus->PPUSTATUS.VBLANK = 0;
+            ppuBus->PPUSTATUS.SPRT_OVERFLOW = 0;
+            for(auto element : ppuBus->SPRT_SHIFTER_LOW)
+                element = 0;
+            for(auto element : ppuBus->SPRT_SHIFTER_HIGH)
+                element = 0;
+        }
         if((col >= 2 && col < 258) || (col >= 321 && col < 338))
         {
-            if(ppuBus->PPUMASK.RENDER_BCKGRD == 1)
-            {
-                ppuBus->BG_SHIFTER_PATTERN_LOW.combined     <<= 1;
-                ppuBus->BG_SHIFTER_PATTERN_HIGH.combined    <<= 1;
-                ppuBus->BG_SHIFTER_ATTR_LOW.combined        <<= 1;
-                ppuBus->BG_SHIFTER_ATTR_HIGH.combined       <<= 1;
-            }
+            shift(); // To update both backgorund and foreground shifters
             int a = (col - 1) % 8;
             
             if(a == 0)
             {
-                ppuBus->BG_SHIFTER_PATTERN_LOW.combined    =  (ppuBus->BG_SHIFTER_PATTERN_LOW.combined & 0xFF00)  | ppuBus->BG_RENDER_FETCH.BG_NEXT_LOW;
-                ppuBus->BG_SHIFTER_PATTERN_HIGH.combined   =  (ppuBus->BG_SHIFTER_PATTERN_HIGH.combined & 0xFF00) | ppuBus->BG_RENDER_FETCH.BG_NEXT_HIGH;
-                ppuBus->BG_SHIFTER_ATTR_LOW.combined       =  (ppuBus->BG_SHIFTER_ATTR_LOW.combined & 0xFF00)     | ((ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR & 0x01) ? 0xFF : 0x00);
-                ppuBus->BG_SHIFTER_ATTR_HIGH.NEXT          =  (ppuBus->BG_SHIFTER_ATTR_HIGH.combined & 0xFF00)    | ((ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR & 0x02) ? 0xFF : 0x00);
+                ppuBus->BG_SHIFTER_PATTERN_LOW.NEXT   =   ppuBus->BG_RENDER_FETCH.BG_NEXT_LOW;
+                ppuBus->BG_SHIFTER_PATTERN_HIGH.NEXT  =   ppuBus->BG_RENDER_FETCH.BG_NEXT_HIGH;
+                ppuBus->BG_SHIFTER_ATTR_LOW.NEXT      =   (ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR & 0x01) ? 0xFF : 0x00;
+                ppuBus->BG_SHIFTER_ATTR_HIGH.NEXT     =  (ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR & 0x02) ? 0xFF : 0x00;
 
                 ppuBus->BG_RENDER_FETCH.BG_NEXT_ID = ppuBus->readFromMemory(0x2000 | (ppuBus->vRAM.combined & 0x0FFF));
             } 
@@ -88,10 +111,10 @@ void PPU::tick()
             }
         if(col == 257)
         {
-            ppuBus->BG_SHIFTER_PATTERN_LOW.combined    =     (ppuBus->BG_SHIFTER_PATTERN_LOW.combined & 0xFF00) | ppuBus->BG_RENDER_FETCH.BG_NEXT_LOW;
-            ppuBus->BG_SHIFTER_PATTERN_HIGH.combined   =     (ppuBus->BG_SHIFTER_PATTERN_HIGH.combined & 0xFF00) | ppuBus->BG_RENDER_FETCH.BG_NEXT_HIGH;
-            ppuBus->BG_SHIFTER_ATTR_LOW.combined       =     (ppuBus->BG_SHIFTER_ATTR_LOW.combined & 0xFF00) | (ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR & 0x01) ? 0xFF : 0x00;
-            ppuBus->BG_SHIFTER_ATTR_HIGH.NEXT          =     (ppuBus->BG_SHIFTER_ATTR_HIGH.combined & 0xFF00) | (ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR & 0x02) ? 0xFF : 0x00;
+            ppuBus->BG_SHIFTER_PATTERN_LOW.NEXT   =   ppuBus->BG_RENDER_FETCH.BG_NEXT_LOW;
+            ppuBus->BG_SHIFTER_PATTERN_HIGH.NEXT  =   ppuBus->BG_RENDER_FETCH.BG_NEXT_HIGH;
+            ppuBus->BG_SHIFTER_ATTR_LOW.NEXT      =   (ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR & 0x01) ? 0xFF : 0x00;
+            ppuBus->BG_SHIFTER_ATTR_HIGH.NEXT     =  (ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR & 0x02) ? 0xFF : 0x00;
             if(ppuBus->PPUMASK.RENDER_BCKGRD || ppuBus->PPUMASK.RENDER_SPRTS)
             {
                 ppuBus->vRAM.CO_X = ppuBus->tempRAM.CO_X;
@@ -108,6 +131,73 @@ void PPU::tick()
                 ppuBus->vRAM.FINE_Y = ppuBus->tempRAM.FINE_Y;
             }
         
+        if(col == 257 && row >= 0)
+        {
+            nextRowSprites.clear();
+            for(auto element : ppuBus->SPRT_SHIFTER_LOW)
+                element = 0;
+            for(auto element : ppuBus->SPRT_SHIFTER_HIGH)
+                element = 0;
+
+            for(int i = 0;i < 64 && nextRowSprites.getSize() < 9;i++)
+            {
+                ADDRESS offset = ((ADDRESS)row - ((ADDRESS)ppuBus->OAM[i].y));
+                if(offset >= 0 && offset < (ppuBus->PPUCTRL.SPRT_SIZE ? 16 : 8))
+                {
+                    if(nextRowSprites.getSize() < 8)
+                        nextRowSprites.add(ppuBus->OAM[i]);
+                    
+                }
+            }
+            ppuBus->PPUSTATUS.SPRT_OVERFLOW = (nextRowSprites.getSize() > 8) ? 1 : 0; 
+        }
+
+        if(col == 340)
+        {
+            for(int i = 0;i < nextRowSprites.getSize();i++)
+            {
+                ppuBus->SPRT_PATTERN_LOW = 0x00;ppuBus->SPRT_PATTERN_HIGH = 0x00;
+                ppuBus->SPRT_PATTERN_ADDR_L = 0x0000;
+
+                if(ppuBus->PPUCTRL.SPRT_SIZE == 0)
+                {
+                    if(!(nextRowSprites[i].attribute & 0x80)) // Vertical Flip Orientation
+                        ppuBus->SPRT_PATTERN_ADDR_L = (ppuBus->PPUCTRL.PATTERN_SPRT << 12)  | (nextRowSprites[i].id << 4)  | (row - nextRowSprites[i].y);          
+                
+                    else
+                        ppuBus->SPRT_PATTERN_ADDR_L = (ppuBus->PPUCTRL.PATTERN_SPRT << 12)  | (nextRowSprites[i].id << 4)  | (7 - row + nextRowSprites[i].y); 
+                }
+                else
+                {
+                    if(!(nextRowSprites[i].attribute & 0x80))
+                    {
+                        if(row - nextRowSprites[i].y < 8)
+                            ppuBus->SPRT_PATTERN_ADDR_L = ((ppuBus->PPUCTRL.PATTERN_SPRT & 0x01) << 12)  | ((nextRowSprites[i].id & 0xFE) << 4)  | ((row - nextRowSprites[i].y) & 0x07);     
+                        else
+                            ppuBus->SPRT_PATTERN_ADDR_L = ((ppuBus->PPUCTRL.PATTERN_SPRT & 0x01) << 12)  | (((nextRowSprites[i].id & 0xFE) + 1) << 4)  | ((row - nextRowSprites[i].y) & 0x07);
+                    }
+                    else
+                    {
+                        if(row - nextRowSprites[i].y < 8)
+                            ppuBus->SPRT_PATTERN_ADDR_L = ((ppuBus->PPUCTRL.PATTERN_SPRT & 0x01) << 12)  | (((nextRowSprites[i].id & 0xFE) + 1) << 4)  | ((7 - row + nextRowSprites[i].y) & 0x07);
+                        else
+                            ppuBus->SPRT_PATTERN_ADDR_L = ((ppuBus->PPUCTRL.PATTERN_SPRT & 0x01) << 12)  | ((nextRowSprites[i].id & 0xFE) << 4)  | ((7 - row + nextRowSprites[i].y) & 0x07);    
+                    }
+                }
+
+                ppuBus->SPRT_PATTERN_LOW = ppuBus->readFromMemory(ppuBus->SPRT_PATTERN_ADDR_L);
+                ppuBus->SPRT_PATTERN_HIGH = ppuBus->readFromMemory(ppuBus->SPRT_PATTERN_ADDR_L + 8);
+
+                if(nextRowSprites[i].attribute & 0x40)
+                {
+                   reverseByte(&ppuBus->SPRT_PATTERN_LOW);
+                   reverseByte(&ppuBus->SPRT_PATTERN_HIGH);
+                }
+
+                ppuBus->SPRT_SHIFTER_LOW[i]  = ppuBus->SPRT_PATTERN_LOW;
+                ppuBus->SPRT_SHIFTER_HIGH[i] = ppuBus->SPRT_PATTERN_HIGH;
+            }
+        }
     }
 
     if(row == 241 && col == 1)
@@ -117,7 +207,7 @@ void PPU::tick()
             ppuBus->setNMI(true);
     }
 
-    if(ppuBus->PPUMASK.RENDER_BCKGRD)
+    if(ppuBus->PPUMASK.RENDER_BCKGRD) // Check background
     {
         BYTE pL = (ppuBus->BG_SHIFTER_PATTERN_LOW.combined & (0x8000 >> ppuBus->FINE_X)) ? 1 : 0;
         BYTE pH = (ppuBus->BG_SHIFTER_PATTERN_HIGH.combined & (0x8000 >> ppuBus->FINE_X)) ? 1 : 0;
@@ -136,8 +226,56 @@ void PPU::tick()
         ppuBus->BG_PALETTE = 0x00;
     }
 
+    ppuBus->FG_PALETTE  = 0x00;
+    ppuBus->FG_PIXEL    = 0x00;
+    ppuBus->FG_PRIORITY = 0x00;
+
+    if(ppuBus->PPUMASK.RENDER_SPRTS) // Check foreground 
+    {
+        for(int i = 0;i < nextRowSprites.getSize(); i++)
+        {
+            if(nextRowSprites[i].x == 0)
+            {
+                BYTE pL = (ppuBus->SPRT_SHIFTER_LOW[i] & 0x80) > 0;
+                BYTE pH = (ppuBus->SPRT_SHIFTER_HIGH[i] & 0x80) > 0;
+                ppuBus->FG_PIXEL = (pH << 1) | pL;
+
+                ppuBus->FG_PALETTE = (nextRowSprites[i].attribute & 0x03) + 0x04;
+                ppuBus->FG_PRIORITY = (nextRowSprites[i].attribute & 0x20) == 0;
+
+                if(ppuBus->FG_PIXEL != 0)
+                    break;
+            }
+        }
+    }
+
+
+
+    if(ppuBus->BG_PIXEL == 0x00 && ppuBus->FG_PIXEL == 0x00)
+    {
+        pixel = 0x00;
+        palette = 0x00;
+    }
+    else if(ppuBus->BG_PIXEL == 0x00 && ppuBus->FG_PIXEL > 0x00)
+    {
+        pixel = ppuBus->FG_PIXEL;
+        palette = ppuBus->FG_PALETTE;
+    }
+    else if(ppuBus->BG_PIXEL > 0x00 && ppuBus->FG_PIXEL == 0x00)
+    {
+        pixel = ppuBus->BG_PIXEL;
+        palette = ppuBus->BG_PALETTE;
+    }
+    else if(ppuBus->BG_PIXEL > 0x00 && ppuBus->FG_PIXEL > 0x00)
+    {
+        pixel = ((ppuBus->FG_PRIORITY) ? ppuBus->FG_PIXEL : ppuBus->BG_PIXEL);
+        palette = ((ppuBus->FG_PRIORITY) ? ppuBus->FG_PALETTE : ppuBus->BG_PALETTE);
+    }
+
+
+
     if(row < 240 && col < 257 && row > -1 && col > 0)
-        display->setPixel(col, row, ppuBus->colors[ ppuBus->readFromMemory(0x3F00 + (ppuBus->BG_PALETTE << 2) + ppuBus->BG_PIXEL) & 0x3F]);
+        display->setPixel(col, row, ppuBus->colors[ ppuBus->readFromMemory(0x3F00 + (palette << 2) + pixel) & 0x3F]);
     
     if(++col >= 341)
     {

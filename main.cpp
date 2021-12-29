@@ -9,7 +9,7 @@ int main(int argc,char** argv)
     // if(argc < 2)
     //     std::cout << "No NES File to read!";
     
-    string fn = string("C:/Users/Ozan/Desktop/C++/NES_Emulator/smb.nes");
+    string fn = string(argv[1]);
 
     NES nes(fn);
 

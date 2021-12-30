@@ -72,39 +72,30 @@ void Controller::handleInput()
 
 void Controller::setJoyButton(int id,int which)
 {
-    std::cout << id << std::endl;
     switch(id)
     {
         case SDL_CONTROLLER_BUTTON_A:  
-            std::cout << "A";
             controllerStatus[which] |= 0x80;
             break;
         case SDL_CONTROLLER_BUTTON_B:  
-            std::cout << "B"; 
             controllerStatus[which] |= 0x40;
             break;
         case SDL_CONTROLLER_BUTTON_BACK:   
-            std::cout << "BACK";
             controllerStatus[which] |= 0x20;
             break;
         case SDL_CONTROLLER_BUTTON_START:   
-            std::cout << "START";
             controllerStatus[which] |= 0x10;
             break;
         case SDL_CONTROLLER_BUTTON_DPAD_UP:   
-            std::cout << "DPAD UP";
             controllerStatus[which] |= 0x08;
             break;
         case SDL_CONTROLLER_BUTTON_DPAD_DOWN:   
-            std::cout << "DPAD DOWN";
             controllerStatus[which] |= 0x04;
             break;
-        case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
-            std::cout << "DPAD LEFT";   
+        case SDL_CONTROLLER_BUTTON_DPAD_LEFT: 
             controllerStatus[which] |= 0x02;
             break;
         case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:   
-            std::cout << "DPAD RIGHT";
             controllerStatus[which] |= 0x01;
             break;
     }
@@ -154,6 +145,70 @@ void Controller::setJoyAxis(int id,int value,int which)
             controllerStatus[which] |= (value < -20000) ?  0x01 : 0x00;
             break;
         default:
+            break;
+    }
+    bus->setControllerMemory(controllerStatus);
+}
+
+void Controller::setKey(int id)
+{
+    switch(id)
+    {
+        case SDL_SCANCODE_X:  
+            controllerStatus[0] |= 0x80;
+            break;
+        case SDL_SCANCODE_C:  
+            controllerStatus[0] |= 0x40;
+            break;
+        case SDL_SCANCODE_A:   
+            controllerStatus[0] |= 0x20;
+            break;
+        case SDL_SCANCODE_S:   
+            controllerStatus[0] |= 0x10;
+            break;
+        case SDL_SCANCODE_UP:   
+            controllerStatus[0] |= 0x08;
+            break;
+        case SDL_SCANCODE_DOWN:   
+            controllerStatus[0] |= 0x04;
+            break;
+        case SDL_SCANCODE_LEFT: 
+            controllerStatus[0] |= 0x02;
+            break;
+        case SDL_SCANCODE_RIGHT:   
+            controllerStatus[0] |= 0x01;
+            break;
+    }
+    bus->setControllerMemory(controllerStatus);
+}
+
+void Controller::clearKey(int id)
+{
+    switch(id)
+    {
+        case SDL_SCANCODE_X:  
+            controllerStatus[0] &= 0x7F;
+            break;
+        case SDL_SCANCODE_C:  
+            controllerStatus[0] &= 0xBF;
+            break;
+        case SDL_SCANCODE_A:   
+            controllerStatus[0] &= 0xD0;
+            break;
+        case SDL_SCANCODE_S:   
+            controllerStatus[0] &= 0xE0;
+            break;
+        case SDL_SCANCODE_UP:   
+            controllerStatus[0] &= 0xF7;
+            break;
+        case SDL_SCANCODE_DOWN:   
+            controllerStatus[0] &= 0xFB;
+            break;
+        case SDL_SCANCODE_LEFT: 
+            controllerStatus[0] &= 0xFD;
+            break;
+        case SDL_SCANCODE_RIGHT:   
+            controllerStatus[0] &= 0xFE;
             break;
     }
     bus->setControllerMemory(controllerStatus);

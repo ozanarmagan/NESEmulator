@@ -30,7 +30,7 @@ class Array
                 iterator(T* rhs) : ptr(rhs) {   };
                 iterator(const T& rhs) : ptr(rhs) { };
                 inline iterator& operator+=(diffType rhs) { ptr += rhs; return *this; };
-                inline iterator& operator-=(diffType rhs) { ptr += rhs; return *this; };
+                inline iterator& operator-=(diffType rhs) { ptr -= rhs; return *this; };
                 inline T& operator*() const { return *ptr; };
                 inline T& operator->() const { return ptr; };
                 inline T& operator[](diffType rhs) const { return ptr[rhs]; };

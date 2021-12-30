@@ -77,6 +77,12 @@ void Display::renderFrame()
             case SDL_CONTROLLERBUTTONUP:
                 controller.clearJoyButton(eventPtr->cbutton.button,eventPtr->cbutton.which);
                 break;
+            case SDL_KEYDOWN:
+                controller.setKey(eventPtr->key.keysym.scancode);
+                break;
+            case SDL_KEYUP:
+                controller.clearKey(eventPtr->key.keysym.scancode);
+                break;
             default:
                 break;
             }

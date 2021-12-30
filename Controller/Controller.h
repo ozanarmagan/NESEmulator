@@ -15,6 +15,8 @@ class Controller
         void setJoyButton(int id,int which);
         void clearJoyButton(int id,int which);
         void setJoyAxis(int id,int value,int which);
+        void setKey(int id);
+        void clearKey(int id);
         void handleInput();
     private:
         void getKeyState() {const BYTE* keys_ = SDL_GetKeyboardState(NULL);keys = keys_;};

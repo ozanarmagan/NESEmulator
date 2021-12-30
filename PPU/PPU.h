@@ -32,8 +32,9 @@ class PPU
         const bool inline isFrameDone() { return frameDone; };
         void clearFrameDone() { frameDone = false; };
         friend std::ostream& operator<<(std::ostream &out,PPU &ppu); // For logging stuff
+#ifdef DEBUG
         void getPatternTable();
-        friend class PPUBus;
+#endif
     private:
         Bus* mainBus;
         Cartridge* cartridge;
@@ -44,6 +45,13 @@ class PPU
         bool frameDone = false;
         Array<OBJECT_ATTRIBUTE> nextRowSprites; 
         void shift();
+        void frameReset();
+        void setSpritesForNextRow();
+        void loadSpritesForNextRow();
+        void setBackgroundPixel();
+        void setForegroundPixel();
+        void getFinalPixel();
+        void loadShifters();
         BYTE pixel = 0x00;
         BYTE palette = 0x00;
         bool spriteZeroIndicator = false;

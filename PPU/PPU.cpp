@@ -1,6 +1,25 @@
 #include "PPU.h"
 
+// Shifters are stores for which pixels and palettes going to be used for next 8 pixels
+// While every bit of low and high pattern shifter representing 1 pixel (LSB and MSB),
+// Palette (Attribute) actually depends on only which tile is going to be rendered
+// So it is going to be same for next 8 pixels,but we also put them in a shifter and rotate
+// To make things easier while rendering
+// First 8 bits of shifters represents pixel going to be rendered in this tile and (higher 8 bits)
+// Other 8 bits of shifter represents pixels going to be rendered in next tile (lower 8 bits)
+// X X X X X X X X X Y Y Y Y Y Y Y Y Y  <- one of shifters represented (16 bit)
+//   Current tile        Next tile    
+void PPU::loadShifters()
+{
+    ppuBus->BG_SHIFTER_PATTERN_LOW.NEXT   =   ppuBus->BG_RENDER_FETCH.BG_NEXT_LOW;
+    ppuBus->BG_SHIFTER_PATTERN_HIGH.NEXT  =   ppuBus->BG_RENDER_FETCH.BG_NEXT_HIGH;
+    ppuBus->BG_SHIFTER_ATTR_LOW.NEXT      =   (ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR & 0x01) ? 0xFF : 0x00;
+    ppuBus->BG_SHIFTER_ATTR_HIGH.NEXT     =  (ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR & 0x02) ? 0xFF : 0x00;
+}
 
+
+
+// Shift shifters if currently rendering 
 void PPU::shift()
 {
     if(ppuBus->PPUMASK.RENDER_BCKGRD == 1)
@@ -24,197 +43,106 @@ void PPU::shift()
 }
 
 
-void PPU::tick()
+
+/* This function used to reset PPU register and Sprite Shifters before every frame render */
+void PPU::frameReset()
 {
+    ppuBus->PPUSTATUS.VBLANK = 0;
+    ppuBus->PPUSTATUS.SPRT_ZERO_HIT = 0;
+    ppuBus->PPUSTATUS.SPRT_OVERFLOW = 0;
+    for(auto element : ppuBus->SPRT_SHIFTER_LOW)
+        element = 0;
+    for(auto element : ppuBus->SPRT_SHIFTER_HIGH)
+        element = 0;
 
-#ifdef PPUDEBUG
-    log();
-#endif
+}
 
 
+/* Load Sprites Array with first 8 sprites to occur in next row (scanline) */
+void PPU::setSpritesForNextRow()
+{
+    nextRowSprites.clear();
+    for(auto element : ppuBus->SPRT_SHIFTER_LOW)
+        element = 0;
+    for(auto element : ppuBus->SPRT_SHIFTER_HIGH)
+        element = 0;
 
-    if(row >= -1 && row < 240)
+    spriteZeroIndicator = false;
+
+    for(int i = 0;i < 64 && nextRowSprites.getSize() < 9;i++)
     {
-        if(row == 0 && col == 0)
-            col = 1;
-        if(row == -1 && col == 1)
+        ADDRESS offset = ((ADDRESS)row - ((ADDRESS)ppuBus->OAM[i].y)); // Get offset to current row
+        if(offset >= 0 && offset < (ppuBus->PPUCTRL.SPRT_SIZE ? 16 : 8))
         {
-            ppuBus->PPUSTATUS.VBLANK = 0;
-            ppuBus->PPUSTATUS.SPRT_ZERO_HIT = 0;
-            ppuBus->PPUSTATUS.SPRT_OVERFLOW = 0;
-            for(auto element : ppuBus->SPRT_SHIFTER_LOW)
-                element = 0;
-            for(auto element : ppuBus->SPRT_SHIFTER_HIGH)
-                element = 0;
-        }
-        if((col >= 2 && col < 258) || (col >= 321 && col < 338))
-        {
-            shift(); // To update both backgorund and foreground shifters
-            int a = (col - 1) % 8;
+            if(nextRowSprites.getSize() < 8)
+            {
+                // If we are going to render sprites next row that means 0th sprite might be rendered so set that flag
+                spriteZeroIndicator = true;
+                nextRowSprites.add(ppuBus->OAM[i]);
+            }
             
-            if(a == 0)
-            {
-                ppuBus->BG_SHIFTER_PATTERN_LOW.NEXT   =   ppuBus->BG_RENDER_FETCH.BG_NEXT_LOW;
-                ppuBus->BG_SHIFTER_PATTERN_HIGH.NEXT  =   ppuBus->BG_RENDER_FETCH.BG_NEXT_HIGH;
-                ppuBus->BG_SHIFTER_ATTR_LOW.NEXT      =   (ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR & 0x01) ? 0xFF : 0x00;
-                ppuBus->BG_SHIFTER_ATTR_HIGH.NEXT     =  (ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR & 0x02) ? 0xFF : 0x00;
-
-                ppuBus->BG_RENDER_FETCH.BG_NEXT_ID = ppuBus->readFromMemory(0x2000 | (ppuBus->vRAM.combined & 0x0FFF));
-            } 
-            else if(a == 2)
-            {
-                ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR = ppuBus->readFromMemory(0x23C0 | (ppuBus->vRAM.NT_Y << 11)
-                                                                                     | (ppuBus->vRAM.NT_X << 10)
-                                                                                     | ((ppuBus->vRAM.CO_Y >> 2) << 3)
-                                                                                     | (ppuBus->vRAM.CO_X >> 2));
-                if(ppuBus->vRAM.CO_Y & 0x02) ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR  >>= 4;
-                if(ppuBus->vRAM.CO_X & 0x02) ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR  >>= 2;
-                ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR &= 0x03;
-            }
-            else if(a == 4)
-                ppuBus->BG_RENDER_FETCH.BG_NEXT_LOW = ppuBus->readFromMemory((ppuBus->PPUCTRL.PATTERN_BCKGRND << 12)
-                                                                          + ((ADDRESS)ppuBus->BG_RENDER_FETCH.BG_NEXT_ID << 4)
-                                                                          + (ppuBus->vRAM.FINE_Y));
-            else if(a == 6)
-                ppuBus->BG_RENDER_FETCH.BG_NEXT_HIGH = ppuBus->readFromMemory((ppuBus->PPUCTRL.PATTERN_BCKGRND << 12)
-                                                                            + ((ADDRESS)ppuBus->BG_RENDER_FETCH.BG_NEXT_ID << 4)
-                                                                            + (ppuBus->vRAM.FINE_Y) + 8);
-            else if(a == 7)
-                if(ppuBus->PPUMASK.RENDER_BCKGRD || ppuBus->PPUMASK.RENDER_SPRTS)
-                {
-                    if(ppuBus->vRAM.CO_X == 31)
-                    {
-                        ppuBus->vRAM.CO_X = 0;
-                        ppuBus->vRAM.NT_X = ~ppuBus->vRAM.NT_X;
-                    }
-                    else
-                        ppuBus->vRAM.CO_X++;
-                }
-        }
-        if(col == 256)
-            if(ppuBus->PPUMASK.RENDER_BCKGRD || ppuBus->PPUMASK.RENDER_SPRTS)
-            {
-                if(ppuBus->vRAM.FINE_Y < 7)
-                    ppuBus->vRAM.FINE_Y++;
-                else
-                {
-                    ppuBus->vRAM.FINE_Y = 0;
-                    if(ppuBus->vRAM.CO_Y == 29)
-                    {
-                        ppuBus->vRAM.CO_Y = 0;
-                        ppuBus->vRAM.NT_Y = ~ppuBus->vRAM.NT_Y;
-                    }
-                    else if(ppuBus->vRAM.CO_Y == 31)
-                        ppuBus->vRAM.CO_Y = 0;
-                    else
-                        ppuBus->vRAM.CO_Y++;
-                }
-            }
-        if(col == 257)
-        {
-            ppuBus->BG_SHIFTER_PATTERN_LOW.NEXT   =   ppuBus->BG_RENDER_FETCH.BG_NEXT_LOW;
-            ppuBus->BG_SHIFTER_PATTERN_HIGH.NEXT  =   ppuBus->BG_RENDER_FETCH.BG_NEXT_HIGH;
-            ppuBus->BG_SHIFTER_ATTR_LOW.NEXT      =   (ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR & 0x01) ? 0xFF : 0x00;
-            ppuBus->BG_SHIFTER_ATTR_HIGH.NEXT     =  (ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR & 0x02) ? 0xFF : 0x00;
-            if(ppuBus->PPUMASK.RENDER_BCKGRD || ppuBus->PPUMASK.RENDER_SPRTS)
-            {
-                ppuBus->vRAM.CO_X = ppuBus->tempRAM.CO_X;
-                ppuBus->vRAM.NT_X = ppuBus->tempRAM.NT_X;
-            }
-        }
-        if(col == 338 || col == 340)
-            ppuBus->BG_RENDER_FETCH.BG_NEXT_ID = ppuBus->readFromMemory(0x2000 | (ppuBus->vRAM.combined & 0x0FFF));
-        if(row == -1 && col >= 280 && col < 305)
-            if(ppuBus->PPUMASK.RENDER_BCKGRD || ppuBus->PPUMASK.RENDER_SPRTS)
-            {
-                ppuBus->vRAM.CO_Y = ppuBus->tempRAM.CO_Y;
-                ppuBus->vRAM.NT_Y = ppuBus->tempRAM.NT_Y;
-                ppuBus->vRAM.FINE_Y = ppuBus->tempRAM.FINE_Y;
-            }
-        
-        if(col == 257 && row >= 0)
-        {
-            nextRowSprites.clear();
-            for(auto element : ppuBus->SPRT_SHIFTER_LOW)
-                element = 0;
-            for(auto element : ppuBus->SPRT_SHIFTER_HIGH)
-                element = 0;
-
-            spriteZeroIndicator = false;
-
-            for(int i = 0;i < 64 && nextRowSprites.getSize() < 9;i++)
-            {
-                ADDRESS offset = ((ADDRESS)row - ((ADDRESS)ppuBus->OAM[i].y));
-                if(offset >= 0 && offset < (ppuBus->PPUCTRL.SPRT_SIZE ? 16 : 8))
-                {
-                    if(nextRowSprites.getSize() < 8)
-                    {
-                        spriteZeroIndicator = true;
-                        nextRowSprites.add(ppuBus->OAM[i]);
-                    }
-                    
-                }
-            }
-            ppuBus->PPUSTATUS.SPRT_OVERFLOW = (nextRowSprites.getSize() > 8) ? 1 : 0; 
-        }
-
-        if(col == 340)
-        {
-            for(int i = 0;i < nextRowSprites.getSize();i++)
-            {
-                ppuBus->SPRT_PATTERN_LOW = 0x00;ppuBus->SPRT_PATTERN_HIGH = 0x00;
-                ppuBus->SPRT_PATTERN_ADDR_L = 0x0000;
-
-                if(ppuBus->PPUCTRL.SPRT_SIZE == 0)
-                {
-                    if(!(nextRowSprites[i].attribute & 0x80)) // Vertical Flip Orientation
-                        ppuBus->SPRT_PATTERN_ADDR_L = (ppuBus->PPUCTRL.PATTERN_SPRT << 12)  | (nextRowSprites[i].id << 4)  | (row - nextRowSprites[i].y);          
-                
-                    else
-                        ppuBus->SPRT_PATTERN_ADDR_L = (ppuBus->PPUCTRL.PATTERN_SPRT << 12)  | (nextRowSprites[i].id << 4)  | (7 - row + nextRowSprites[i].y); 
-                }
-                else
-                {
-                    if(!(nextRowSprites[i].attribute & 0x80))
-                    {
-                        if(row - nextRowSprites[i].y < 8)
-                            ppuBus->SPRT_PATTERN_ADDR_L = ((ppuBus->PPUCTRL.PATTERN_SPRT & 0x01) << 12)  | ((nextRowSprites[i].id & 0xFE) << 4)  | ((row - nextRowSprites[i].y) & 0x07);     
-                        else
-                            ppuBus->SPRT_PATTERN_ADDR_L = ((ppuBus->PPUCTRL.PATTERN_SPRT & 0x01) << 12)  | (((nextRowSprites[i].id & 0xFE) + 1) << 4)  | ((row - nextRowSprites[i].y) & 0x07);
-                    }
-                    else
-                    {
-                        if(row - nextRowSprites[i].y < 8)
-                            ppuBus->SPRT_PATTERN_ADDR_L = ((ppuBus->PPUCTRL.PATTERN_SPRT & 0x01) << 12)  | (((nextRowSprites[i].id & 0xFE) + 1) << 4)  | ((7 - row + nextRowSprites[i].y) & 0x07);
-                        else
-                            ppuBus->SPRT_PATTERN_ADDR_L = ((ppuBus->PPUCTRL.PATTERN_SPRT & 0x01) << 12)  | ((nextRowSprites[i].id & 0xFE) << 4)  | ((7 - row + nextRowSprites[i].y) & 0x07);    
-                    }
-                }
-
-                ppuBus->SPRT_PATTERN_LOW = ppuBus->readFromMemory(ppuBus->SPRT_PATTERN_ADDR_L);
-                ppuBus->SPRT_PATTERN_HIGH = ppuBus->readFromMemory(ppuBus->SPRT_PATTERN_ADDR_L + 8);
-
-                if(nextRowSprites[i].attribute & 0x40)
-                {
-                   reverseByte(&ppuBus->SPRT_PATTERN_LOW);
-                   reverseByte(&ppuBus->SPRT_PATTERN_HIGH);
-                }
-
-                ppuBus->SPRT_SHIFTER_LOW[i]  = ppuBus->SPRT_PATTERN_LOW;
-                ppuBus->SPRT_SHIFTER_HIGH[i] = ppuBus->SPRT_PATTERN_HIGH;
-            }
         }
     }
+    ppuBus->PPUSTATUS.SPRT_OVERFLOW = (nextRowSprites.getSize() > 8) ? 1 : 0;  // Check sprite overflow
+}
 
-    if(row == 241 && col == 1)
+
+/* Find which parts of found sprites to be rendered for next row and also find their orientation depending on their attribute */
+void PPU::loadSpritesForNextRow()
+{
+    for(int i = 0;i < nextRowSprites.getSize();i++)
     {
-        ppuBus->PPUSTATUS.VBLANK = 1;
-        if(ppuBus->PPUCTRL.ENABLE_NMI)
-            ppuBus->setNMI(true);
-    }
+        ppuBus->SPRT_PATTERN_LOW = 0x00;ppuBus->SPRT_PATTERN_HIGH = 0x00;
+        ppuBus->SPRT_PATTERN_ADDR_L = 0x0000;
 
+        // Check Vertical orientation of sprite first according to sprite size (8x8 or 8x16).
+        // Because Vertical flip changes which bytes of sprite are going to be read
+        // Besides horizontal flip only changes order of that particular byte 
+        if(ppuBus->PPUCTRL.SPRT_SIZE == 0)
+        {
+            if(!(nextRowSprites[i].attribute & 0x80)) 
+                ppuBus->SPRT_PATTERN_ADDR_L = (ppuBus->PPUCTRL.PATTERN_SPRT << 12)  | (nextRowSprites[i].id << 4)  | (row - nextRowSprites[i].y);          
+        
+            else
+                ppuBus->SPRT_PATTERN_ADDR_L = (ppuBus->PPUCTRL.PATTERN_SPRT << 12)  | (nextRowSprites[i].id << 4)  | (7 - row + nextRowSprites[i].y); 
+        }
+        else
+        {
+            if(!(nextRowSprites[i].attribute & 0x80))
+            {
+                if(row - nextRowSprites[i].y < 8)
+                    ppuBus->SPRT_PATTERN_ADDR_L = ((ppuBus->PPUCTRL.PATTERN_SPRT & 0x01) << 12)  | ((nextRowSprites[i].id & 0xFE) << 4)  | ((row - nextRowSprites[i].y) & 0x07);     
+                else
+                    ppuBus->SPRT_PATTERN_ADDR_L = ((ppuBus->PPUCTRL.PATTERN_SPRT & 0x01) << 12)  | (((nextRowSprites[i].id & 0xFE) + 1) << 4)  | ((row - nextRowSprites[i].y) & 0x07);
+            }
+            else
+            {
+                if(row - nextRowSprites[i].y < 8)
+                    ppuBus->SPRT_PATTERN_ADDR_L = ((ppuBus->PPUCTRL.PATTERN_SPRT & 0x01) << 12)  | (((nextRowSprites[i].id & 0xFE) + 1) << 4)  | ((7 - row + nextRowSprites[i].y) & 0x07);
+                else
+                    ppuBus->SPRT_PATTERN_ADDR_L = ((ppuBus->PPUCTRL.PATTERN_SPRT & 0x01) << 12)  | ((nextRowSprites[i].id & 0xFE) << 4)  | ((7 - row + nextRowSprites[i].y) & 0x07);    
+            }
+        }
+
+        ppuBus->SPRT_PATTERN_LOW = ppuBus->readFromMemory(ppuBus->SPRT_PATTERN_ADDR_L);
+        ppuBus->SPRT_PATTERN_HIGH = ppuBus->readFromMemory(ppuBus->SPRT_PATTERN_ADDR_L + 8);
+
+        if(nextRowSprites[i].attribute & 0x40) // Horizontal Flip orientation
+        {
+            reverseByte(&ppuBus->SPRT_PATTERN_LOW);
+            reverseByte(&ppuBus->SPRT_PATTERN_HIGH);
+        }
+
+        ppuBus->SPRT_SHIFTER_LOW[i]  = ppuBus->SPRT_PATTERN_LOW;
+        ppuBus->SPRT_SHIFTER_HIGH[i] = ppuBus->SPRT_PATTERN_HIGH;
+    }
+}
+
+void PPU::setBackgroundPixel()
+{
     if(ppuBus->PPUMASK.RENDER_BCKGRD) // Check background
     {
+        // set BG Pixel and PG Palette according to offset in current tile (FINE_X)
         BYTE pL = (ppuBus->BG_SHIFTER_PATTERN_LOW.combined & (0x8000 >> ppuBus->FINE_X)) ? 1 : 0;
         BYTE pH = (ppuBus->BG_SHIFTER_PATTERN_HIGH.combined & (0x8000 >> ppuBus->FINE_X)) ? 1 : 0;
 
@@ -231,7 +159,11 @@ void PPU::tick()
         ppuBus->BG_PIXEL = 0x00;
         ppuBus->BG_PALETTE = 0x00;
     }
+}
 
+
+void PPU::setForegroundPixel()
+{
     ppuBus->FG_PALETTE  = 0x00;
     ppuBus->FG_PIXEL    = 0x00;
     ppuBus->FG_PRIORITY = 0x00;
@@ -250,6 +182,7 @@ void PPU::tick()
                 ppuBus->FG_PALETTE = (nextRowSprites[i].attribute & 0x03) + 0x04;
                 ppuBus->FG_PRIORITY = (nextRowSprites[i].attribute & 0x20) == 0;
 
+                // If this is the first sprite (sprite-zero) going to be rendered set Flag
                 if(ppuBus->FG_PIXEL != 0)
                 {
                     if(i == 0)
@@ -259,9 +192,30 @@ void PPU::tick()
             }
         }
     }
+}
 
 
 
+// Now after a long proccess we have both background and foreground pixel for current pixel
+// All we need to is compare their priority now 
+// This priority depending on which one is zero and which one is not 
+// If both of them are zero that means current pixel actually transparent
+// But if both of them are set than which one is going to be rendered selected according to
+// priority flag of foreground pixel that read from attiribute of sprite in OAM
+// Here is a table for that (Not value 1 is symbolic and represents non-zero value)
+// -------------------------------
+// |  BG    |   FG   |  result   |
+// |-----------------------------|
+// |   0    |    0   |TRANSPARENT|
+// |-----------------------------|
+// |   1    |    0   |     BG    |
+// |-----------------------------|
+// |   0    |    1   |     fG    |
+// |-----------------------------|
+// |   1    |    1   |FG_PRIORITY|
+// -------------------------------
+void PPU::getFinalPixel()
+{
     if(ppuBus->BG_PIXEL == 0x00 && ppuBus->FG_PIXEL == 0x00)
     {
         pixel = 0x00;
@@ -291,13 +245,137 @@ void PPU::tick()
                         ppuBus->PPUSTATUS.SPRT_ZERO_HIT = 1;
                 
     }
+}
 
+
+void PPU::tick()
+{
+
+#ifdef PPUDEBUG
+    log();
+#endif
+
+
+
+    if(row >= -1 && row < 240) // If currently rendering visible screen rows
+    {
+        if(row == 0 && col == 0) // Skip odd frame becase this is technically is last pixel of last row
+            col = 1;
+        if(row == -1 && col == 1) // Reset registers and vblank for next frame 
+            frameReset();
+        if((col >= 2 && col < 258) || (col >= 321 && col < 338))
+        {
+            shift(); // To update both backgorund and foreground shifters
+
+
+            // While we are rendering current tile,actually also we are fetching next tile in every step
+            // In start of current tile (1st pixel of tile) -> Get ID of next tile 
+            // In 3rd pixel of current tile  -> fetch attirubte (palette) of next tile from attribute table which is in the end of every nametable
+            // In 5th pixel of current tile  -> fetch LSBs of next tile
+            // In 7th pixel of current tile  -> fetch MSBs of next tile
+            // In last pixel of current tile -> Increase number of tiles rendered (coarse X)
+            // NOTE: As you may notice every fetch (pattern ID,Attribute,LSB,MSB) takes 2 PPU cycles
+            int a = (col - 1) % 8;
+            
+            if(a == 0) // Get Next tile ID and load shifters for next tile 
+            {
+                loadShifters(); 
+
+                ppuBus->BG_RENDER_FETCH.BG_NEXT_ID = ppuBus->readFromMemory(0x2000 | (ppuBus->vRAM.combined & 0x0FFF));
+            } 
+            else if(a == 2) // Get Next tile Attribute from Attribute Table 
+            {
+                ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR = ppuBus->readFromMemory(0x23C0 | (ppuBus->vRAM.NT_Y << 11)
+                                                                                     | (ppuBus->vRAM.NT_X << 10)
+                                                                                     | ((ppuBus->vRAM.CO_Y >> 2) << 3)
+                                                                                     | (ppuBus->vRAM.CO_X >> 2));
+                if(ppuBus->vRAM.CO_Y & 0x02) ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR  >>= 4;
+                if(ppuBus->vRAM.CO_X & 0x02) ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR  >>= 2;
+                ppuBus->BG_RENDER_FETCH.BG_NEXT_ATTR &= 0x03;
+            }
+            else if(a == 4) // Get Next tile LSBs
+                ppuBus->BG_RENDER_FETCH.BG_NEXT_LOW = ppuBus->readFromMemory((ppuBus->PPUCTRL.PATTERN_BCKGRND << 12)
+                                                                          + ((ADDRESS)ppuBus->BG_RENDER_FETCH.BG_NEXT_ID << 4)
+                                                                          + (ppuBus->vRAM.FINE_Y));
+            else if(a == 6) // Get Next tile MSBs
+                ppuBus->BG_RENDER_FETCH.BG_NEXT_HIGH = ppuBus->readFromMemory((ppuBus->PPUCTRL.PATTERN_BCKGRND << 12)
+                                                                            + ((ADDRESS)ppuBus->BG_RENDER_FETCH.BG_NEXT_ID << 4)
+                                                                            + (ppuBus->vRAM.FINE_Y) + 8);
+            else if(a == 7) // Load shifters
+                if(ppuBus->PPUMASK.RENDER_BCKGRD || ppuBus->PPUMASK.RENDER_SPRTS)
+                {
+                    if(ppuBus->vRAM.CO_X == 31) // 32th CO_X means end of the row
+                    {
+                        ppuBus->vRAM.CO_X = 0;
+                        ppuBus->vRAM.NT_X = ~ppuBus->vRAM.NT_X;
+                    }
+                    else
+                        ppuBus->vRAM.CO_X++;
+                }
+        }
+        if(col == 256)
+            if(ppuBus->PPUMASK.RENDER_BCKGRD || ppuBus->PPUMASK.RENDER_SPRTS)
+            {
+                if(ppuBus->vRAM.FINE_Y < 7)
+                    ppuBus->vRAM.FINE_Y++;
+                else
+                {
+                    ppuBus->vRAM.FINE_Y = 0;
+                    if(ppuBus->vRAM.CO_Y == 29)
+                    {
+                        ppuBus->vRAM.CO_Y = 0;
+                        ppuBus->vRAM.NT_Y = ~ppuBus->vRAM.NT_Y;
+                    }
+                    else if(ppuBus->vRAM.CO_Y == 31)
+                        ppuBus->vRAM.CO_Y = 0;
+                    else
+                        ppuBus->vRAM.CO_Y++;
+                }
+            }
+        if(col == 257)
+        {
+            loadShifters();
+            if(ppuBus->PPUMASK.RENDER_BCKGRD || ppuBus->PPUMASK.RENDER_SPRTS)
+            {
+                ppuBus->vRAM.CO_X = ppuBus->tempRAM.CO_X;
+                ppuBus->vRAM.NT_X = ppuBus->tempRAM.NT_X;
+            }
+        }
+        if(col == 338 || col == 340)
+            ppuBus->BG_RENDER_FETCH.BG_NEXT_ID = ppuBus->readFromMemory(0x2000 | (ppuBus->vRAM.combined & 0x0FFF));
+        if(row == -1 && col >= 280 && col < 305)
+            if(ppuBus->PPUMASK.RENDER_BCKGRD || ppuBus->PPUMASK.RENDER_SPRTS)
+            {
+                ppuBus->vRAM.CO_Y = ppuBus->tempRAM.CO_Y;
+                ppuBus->vRAM.NT_Y = ppuBus->tempRAM.NT_Y;
+                ppuBus->vRAM.FINE_Y = ppuBus->tempRAM.FINE_Y;
+            }
+        
+        if(col == 257 && row >= 0)
+            setSpritesForNextRow();
+
+        if(col == 340)
+            loadSpritesForNextRow();
+    }
+
+    if(row == 241 && col == 1)
+    {
+        ppuBus->PPUSTATUS.VBLANK = 1; // Vertical blank has activated
+        if(ppuBus->PPUCTRL.ENABLE_NMI)
+            ppuBus->setNMI(true);
+    }
+
+    setBackgroundPixel();
+
+    setForegroundPixel();
+
+    getFinalPixel();
 
 
     if(row < 240 && col < 257 && row > -1 && col > 0)
         display->setPixel(col, row, ppuBus->colors[ ppuBus->readFromMemory(0x3F00 + (palette << 2) + pixel) & 0x3F]);
     
-    if(++col >= 341)
+    if(++col >= 341) // Increment TİCK
     {
         col = 0;
         if(++row >= 261)

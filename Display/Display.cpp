@@ -129,22 +129,6 @@ void Display::renderDebugFrame()
     SDL_RenderCopy(Drenderer, Dtexture, NULL, NULL);
     SDL_RenderPresent(Drenderer);
 
-    while(SDL_PollEvent(eventPtr))
-    {
-        switch (eventPtr->type)
-            {
-            case SDL_KEYDOWN:
-                controller.setKeyStatus(eventPtr->key.keysym.scancode);
-                break;
-            case SDL_KEYUP:
-                controller.clearKeyStatus(eventPtr->key.keysym.scancode);
-                break;
-            default:
-                break;
-            }
-    }
-
-    SDL_Delay(1000/60);
 }
 
 void Display::setPixelDebug(int x, int y,PIXEL_RGB colors)

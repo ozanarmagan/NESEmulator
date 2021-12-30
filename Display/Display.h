@@ -5,6 +5,7 @@
 #include "../Controller/Controller.h"
 #include <SDL2/SDL.h>
 
+#define DEBUG
 
 class Display
 {

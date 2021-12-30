@@ -3,7 +3,7 @@
 
 constexpr BYTE CPU::cycleCounts[];
 
-namespace
+namespace // Helper for logging
 {
 	std::string bTohex(uint32_t n, uint8_t d)
 	{
@@ -540,7 +540,7 @@ void CPU::tick()
 
 
 
-std::ostream& operator<<(std::ostream &out,CPU &cpu)
+std::ostream& operator<<(std::ostream &out,CPU &cpu) // For logging 
 {
 	out << "REGISTERS: " << std::endl;
 	out << "A: " << bTohex(cpu.A,2) << std::endl << "X: " << bTohex(cpu.X,2) << std::endl << "Y: " << bTohex(cpu.Y,2) << std::endl << "SP: " << bTohex(cpu.SP,2) << std::endl;

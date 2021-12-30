@@ -19,58 +19,9 @@ Controller::Controller(Bus* bus) : bus(bus) {
     } 
 }
 
-void Controller::handleInput()
-{
 
 
-
-    getKeyState();
-    controllerStatus[0] |= keys[SDL_SCANCODE_J] ?  0x80 : 0x00;  // A BUTTON
-    controllerStatus[0] |= keys[SDL_SCANCODE_K] ?  0x40 : 0x00;  // B BUTTON
-    controllerStatus[0] |= keys[SDL_SCANCODE_SPACE] ?  0x20 : 0x00;  // SELECT BUTTON
-    controllerStatus[0] |= keys[SDL_SCANCODE_LCTRL] ?  0x10 : 0x00;  // START BUTTON
-    controllerStatus[0] |= (keys[SDL_SCANCODE_W] | keys[SDL_SCANCODE_UP]) ?  0x08 : 0x00;  // UP
-    controllerStatus[0] |= (keys[SDL_SCANCODE_S] | keys[SDL_SCANCODE_DOWN]) ?  0x04 : 0x00;  // DOWN 
-    controllerStatus[0] |= (keys[SDL_SCANCODE_A] | keys[SDL_SCANCODE_LEFT]) ?  0x02 : 0x00;  // LEFT
-    controllerStatus[0] |= (keys[SDL_SCANCODE_D] | keys[SDL_SCANCODE_RIGHT]) ?  0x01 : 0x00;  // RIGHT
-
-    // auto numOfGamePads = SDL_NumGameControllers();
-
-
-
-    // if(contorller1)
-    // {
-    //        BYTE control1 = 0x00;
-    //        control1 |= SDL_GameControllerGetButton(contorller1,SDL_CONTROLLER_BUTTON_A) << 0;
-    //        control1 |= SDL_GameControllerGetButton(contorller1,SDL_CONTROLLER_BUTTON_B) << 1;
-    //        control1 |= SDL_GameControllerGetButton(contorller1,SDL_CONTROLLER_BUTTON_BACK) << 2;
-    //        control1 |= SDL_GameControllerGetButton(contorller1,SDL_CONTROLLER_BUTTON_START) << 3;
-    //        control1 |= SDL_GameControllerGetButton(contorller1,SDL_CONTROLLER_BUTTON_DPAD_UP) << 4;
-    //        control1 |= SDL_GameControllerGetButton(contorller1,SDL_CONTROLLER_BUTTON_DPAD_DOWN) << 5;
-    //        control1 |= SDL_GameControllerGetButton(contorller1,SDL_CONTROLLER_BUTTON_DPAD_LEFT) << 6;
-    //        control1 |= SDL_GameControllerGetButton(contorller1,SDL_CONTROLLER_BUTTON_DPAD_RIGHT) << 7;
-    //        controllerStatus[0] |= control1;
-    // }
-
-    // if(controller2)
-    // {
-    //     if(SDL_GameControllerGetButton(controller2,SDL_CONTROLLER_BUTTON_A)) controllerStatus[1] |= 0x80;
-    //     if(SDL_GameControllerGetButton(controller2,SDL_CONTROLLER_BUTTON_B)) controllerStatus[1] |= 0x40;
-    //     if(SDL_GameControllerGetButton(controller2,SDL_CONTROLLER_BUTTON_BACK)) controllerStatus[1] |= 0x20;
-    //     if(SDL_GameControllerGetButton(controller2,SDL_CONTROLLER_BUTTON_START)) controllerStatus[1] |= 0x10;
-    //     if(SDL_GameControllerGetButton(controller2,SDL_CONTROLLER_BUTTON_DPAD_UP) || SDL_GameControllerGetAxis(controller2,SDL_CONTROLLER_AXIS_RIGHTY)) controllerStatus[1] |= 0x80;
-    //     if(SDL_GameControllerGetButton(controller2,SDL_CONTROLLER_BUTTON_DPAD_DOWN) || SDL_GameControllerGetAxis(controller2,SDL_CONTROLLER_AXIS_LEFTY)) controllerStatus[1] |= 0x40;
-    //     if(SDL_GameControllerGetButton(controller2,SDL_CONTROLLER_BUTTON_DPAD_LEFT) || SDL_GameControllerGetAxis(controller2,SDL_CONTROLLER_AXIS_LEFTX)) controllerStatus[1] |= 0x20;
-    //     if(SDL_GameControllerGetButton(controller2,SDL_CONTROLLER_BUTTON_DPAD_RIGHT) || SDL_GameControllerGetAxis(controller2,SDL_CONTROLLER_AXIS_RIGHTX)) controllerStatus[1] |= 0x10;
-    // }
-
-    bus->setControllerMemory(controllerStatus);
-    controllerStatus[0] = 0x00;
-
-}
-
-
-void Controller::setJoyButton(int id,int which)
+void Controller::setJoyButton(int id,int which) 
 {
     switch(id)
     {

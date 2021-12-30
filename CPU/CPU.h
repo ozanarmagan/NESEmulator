@@ -12,6 +12,19 @@
 
 #endif
 
+
+
+/*  
+    This is a solid emulation of 6502 Proccessor.
+    
+    CPU EMULATION TYPE : Jump Table Based
+    EXPLANATION :
+    Each addressing mode (ADDRESSING_MODE) and operation (OPEXEC) is a  function 
+    and they are forming INSTRUCTION struct for each OPCODE
+    Since there is 256 OPCODE but 6502 using only 151 of them,remaining
+    OPCODEs are illegal and they literally do nothing (NOP)
+*/
+
 class CPU
 {
     public:
@@ -54,7 +67,7 @@ class CPU
 
         INSTRUCTION table[256];
 
-        static constexpr BYTE cycleCounts[256] = {
+        static constexpr BYTE cycleCounts[256] = { // Cycle count for each operation
 		7,6,2,8,3,3,5,5,3,2,2,2,4,4,6,6,
 		2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
 		6,6,2,8,3,3,5,5,4,2,2,2,4,4,6,6,
@@ -73,11 +86,12 @@ class CPU
 		2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
 	};
 
-        static const ADDRESS IRQVECTOR_H = 0xFFFF;
+
+        static const ADDRESS IRQVECTOR_H = 0xFFFF; // IRQ Vector
         static const ADDRESS IRQVECTOR_L = 0xFFFE;
-        static const ADDRESS RSTVECTOR_H = 0xFFFD;
+        static const ADDRESS RSTVECTOR_H = 0xFFFD; // Reset Vector
         static const ADDRESS RSTVECTOR_L = 0xFFFC;
-        static const ADDRESS NMIVECTOR_H = 0xFFFB;
+        static const ADDRESS NMIVECTOR_H = 0xFFFB; // NMI Vector
         static const ADDRESS NMIVECTOR_L = 0xFFFA;
 
         ADDRESS programCounter = 0x0000;
@@ -85,7 +99,7 @@ class CPU
         /* CYCLE INDEX */
         BYTE cycleRemaining = 0;
 
-        BYTE additionalCycle0 = 0,additionalCycle1 = 0;
+        BYTE additionalCycle0 = 0,additionalCycle1 = 0; // Some instructions may require extra cycles to complete
 
         BYTE currentOpCode;
 
@@ -98,7 +112,7 @@ class CPU
         ADDRESS source;
 
         
-
+        /* For stack operations */
         void push(BYTE value);
 
         BYTE pop();

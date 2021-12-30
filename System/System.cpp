@@ -27,6 +27,7 @@ void NES::insertNESFile(std::string fileName)
     FileHeader header;
     if(file.is_open())
     {
+        // Read header first
         file.read((char*)&header.name,4);
         file.read((char*)&header.PRGROMChunks,1);
         file.read((char*)&header.CHRROMChunks,1);
@@ -37,7 +38,7 @@ void NES::insertNESFile(std::string fileName)
         file.read((char*)&header.TVSystem2,1);
         file.read((char*)&header.unused,5);
         if(header.mapper1 & 0x04)
-            file.seekg(512,std::ios_base::cur);
+        file.seekg(512,std::ios_base::cur);
         std::cout << "MAGIC CHARS: " << header.name << std::endl;
         BYTE mapperID = ((header.mapper2 >> 4) << 4) | (header.mapper1 >> 4);
         cartridge.setPRGNum(header.PRGROMChunks);
@@ -98,7 +99,7 @@ void NES::start()
 
 void NES::mainLoop()
 {
-    while(1)
+    RUN_FOREVER
     {
         do
             tick();
@@ -115,47 +116,44 @@ void NES::mainLoop()
 
 void NES::tick()
 {
-
-
     ppu.tick();
 
-    //controller.handleInput();
-    if(clock % 3 == 0)
+    if(clock % 3 == 0) // PPU of NES is 3x faster than CPU in clock-speed wise,so there happens a CPU tick for every PPU tick (which also means a system tick)
     {
-        if(bus.getDMAStatus())
+        if(bus.getDMAStatus()) // Check DMA status from main bus before every CPU tick 
             DMA();
         else
             cpu.tick();
     }
-    
 
-    if(ppuBus.getNMI())
+    if(ppuBus.getNMI()) // If a Non-maskable Interrupt about to happen
     {
         cpu.NMI();
         ppuBus.setNMI(false);
     }
 
-
     clock++;
 }
 
 
+
+
+
 void NES::DMA() // Direct Memory Access 
 {
-    if(bus.DMA_dummy)
+    if(bus.DMA_dummy) // Because of limitations of NES hardware,first odd CPU clock in start of DMA is a dummy-write
     {
         if(clock % 2 == 1)
             bus.DMA_dummy = false;
     }
-    else
+    else // AFter dummy-write,DMA reads address from bus for next write in every even CPU cycle and writes to PPU Bus OAM via main bus in every odd CPU cycle
     {
         if(clock % 2 == 0)
             bus.DMAReadNext();
         else
         {
             bus.writeOAM();
-            
-            if(bus.DMA_low == 0x00)
+            if(bus.DMA_low == 0x00) // DMA is done after writing 256 bytes (which is equal to approximately 1 CPU page)
             {
                 bus.DMA = false;
                 bus.DMA_dummy = true;

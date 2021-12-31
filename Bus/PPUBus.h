@@ -23,7 +23,7 @@ class PPUBus
         friend class PPU;
         friend class Bus;
     private:
-        BYTE nameTables[2048];
+        BYTE nameTables[4096];
         BYTE palettes[32];
         PIXEL_RGB colors[64];
         std::shared_ptr<MapperBase> mapper;

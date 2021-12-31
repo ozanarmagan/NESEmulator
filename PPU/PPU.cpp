@@ -259,7 +259,7 @@ void PPU::tick()
 
     if(row >= -1 && row < 240) // If currently rendering visible screen rows
     {
-        if(row == 0 && col == 0) // Skip odd frame becase this is technically is last pixel of last row
+        if(row == 0 && col == 0 && odd & (ppuBus->PPUMASK.RENDER_BCKGRD || ppuBus->PPUMASK.RENDER_SPRTS)) // Skip odd frame becase this is technically is last pixel of last row
             col = 1;
         if(row == -1 && col == 1) // Reset registers and vblank for next frame 
             frameReset();
@@ -382,6 +382,7 @@ void PPU::tick()
         {
             row = -1;
             frameDone = true;
+            odd = !odd;
         }
     }
 

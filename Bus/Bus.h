@@ -16,7 +16,7 @@ class Bus
         BYTE readFromMemory(ADDRESS address);
         void writeToMemory(ADDRESS address,BYTE value);
         void clearMemoryBlock(ADDRESS start,ADDRESS end);
-        void setMapper(std::shared_ptr<MapperBase> _mapper) { mapper = _mapper; }; // not implemented yet
+        void setMapper(std::shared_ptr<MapperBase> _mapper) { mapper = _mapper; };
         void setControllerMemory(BYTE controllers[2]) { controllerCache[0] = controllers[0]; controllerCache[1] = controllerCache[1]; };
         bool getDMAStatus() const { return DMA; };
         void print(int end = 20);

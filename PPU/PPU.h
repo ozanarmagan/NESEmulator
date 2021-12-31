@@ -56,7 +56,7 @@ class PPU
         BYTE palette = 0x00;
         bool spriteZeroIndicator = false;
         bool spriteZero = false;
-
+        bool odd = false;
 #ifdef PPUDEBUG
         FILE* ppuLog;
         void log();

@@ -53,6 +53,7 @@ void NES::insertNESFile(std::string fileName)
             CHRmem = new BYTE[header.CHRROMChunks * 8192];
         file.read((char*) CHRmem,(header.CHRROMChunks != 0 ? header.CHRROMChunks : 1) * 8192);
         cartridge.loadCHRData(CHRmem);
+        std::cout << "Mapper ID:" << mapperID;
         cartridge.setMapperID(mapperID);
         setMapper();
         mapper->setMirroring((header.mapper1 & 0x01) ? MIRRORING::VERTICAL : MIRRORING::HORIZONTAL);
@@ -70,6 +71,7 @@ void NES::setMapper()
     switch (cartridge.getMapperID())
     {
     case 0:mapper = std::make_shared<Mapper0>(&cartridge);break;   
+    case 1:mapper = std::make_shared<Mapper1>(&cartridge);break; 
     default:
         break;
     }

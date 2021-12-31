@@ -107,7 +107,7 @@ BYTE PPUBus::readFromMemory(ADDRESS address)
 		address &= 0x0FFF;
 		if(mapper->getMirroring() == MIRRORING::VERTICAL)
 		{
-			return nameTables[address % 0x800];
+			return nameTables[address % 2048];
 		}
 		else if(mapper->getMirroring() == MIRRORING::HORIZONTAL)
 		{
@@ -116,6 +116,12 @@ BYTE PPUBus::readFromMemory(ADDRESS address)
 			else
 				return nameTables[(address % 1024) + 1024];
 		}
+		else if(mapper->getMirroring() == MIRRORING::FOURSCREENS)
+			return nameTables[address % 4096];
+		else if(mapper->getMirroring() == MIRRORING::ONSCREENLOWER)
+			return nameTables[address % 1024];
+		else if(mapper->getMirroring() == MIRRORING::ONSCREENHIGHER)
+			return nameTables[(address % 1024) + 1024];
 		else
 			return 0x00;
 	}
@@ -143,15 +149,21 @@ void PPUBus::writeToMemory(ADDRESS address,BYTE value)
 		address &= 0x0FFF;
 		if(mapper->getMirroring() == MIRRORING::VERTICAL)
 		{
-			nameTables[address % 0x800] = value;
+			nameTables[address % 2048] = value;
 		}
 		else if(mapper->getMirroring() == MIRRORING::HORIZONTAL)
 		{
 			if(address <= 0x07FF)
-				nameTables[address & 0x3FF] = value;
+				nameTables[address % 1024] = value;
 			else
 				nameTables[(address % 1024) + 1024] = value;
 		}
+		else if(mapper->getMirroring() == MIRRORING::FOURSCREENS)
+			nameTables[address % 4096] = value;
+		else if(mapper->getMirroring() == MIRRORING::ONSCREENLOWER)
+			nameTables[address % 1024] = value;
+		else if(mapper->getMirroring() == MIRRORING::ONSCREENHIGHER)
+			nameTables[(address % 1024) + 1024] = value;
 	}
 	else if(address >= 0x3F00 && address <= 0x3FFF)
 	{

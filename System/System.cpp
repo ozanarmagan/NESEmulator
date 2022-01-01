@@ -90,13 +90,14 @@ void NES::setMapper()
     case 0:mapper = std::make_shared<Mapper0>(&cartridge);break;   
     case 1:mapper = std::make_shared<Mapper1>(&cartridge);break; 
     case 2:mapper = std::make_shared<Mapper2>(&cartridge);break; 
+    case 3:mapper = std::make_shared<Mapper3>(&cartridge);break; 
     default:
         break;
     }
 
     bus.setMapper(mapper);
     ppuBus.setMapper(mapper);
-}
+}   
 
 
 

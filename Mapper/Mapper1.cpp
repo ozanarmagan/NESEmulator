@@ -56,10 +56,6 @@ void Mapper1::updatePRG()
 }
 
 
-void Mapper1::updateCHR()
-{
-
-}
 
 void Mapper1::MapWriteCpu(ADDRESS address,BYTE value)
 {

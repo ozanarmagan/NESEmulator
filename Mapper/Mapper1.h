@@ -15,8 +15,6 @@ class Mapper1 : public MapperBase
     private:
         void resetRegisters();
         void updatePRG();
-        void updateCHR();
-        void updateMirroring();
         BYTE PRGRAM[8*1024];
         struct {
             BYTE controlReg = 0x00,tempReg = 0x00,tempRegNum = 0x00;

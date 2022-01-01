@@ -6,6 +6,7 @@
 #include "../Mapper/MapperBase.h"
 #include "../Mapper/Mapper0.h"
 #include "../Mapper/Mapper1.h"
+#include "../Mapper/Mapper2.h"
 #include "../Bus/Bus.h"
 #include "../Bus/PPUBus.h"
 #include "../PPU/PPU.h"

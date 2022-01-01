@@ -107,7 +107,7 @@ class CPU
 
         Bus& bus;
 
-        int COUNTER = 0;
+        uint64_t clock = 0;
 
         ADDRESS source;
 

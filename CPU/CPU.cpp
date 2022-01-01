@@ -21,7 +21,7 @@ CPU::CPU(Bus& mem) : bus(mem) {
 	logFile = fopen("./Logs/cpu.log","w+");
 #endif
 	
-	COUNTER = 0;
+	clock = 0;
 	programCounter = 0;
 
     // Fill with NOP for empty OPCODES 
@@ -532,7 +532,7 @@ void CPU::tick()
 		additionalCycle1 = 0x00;
 	}
 		
-    COUNTER++;
+    clock++;
 
 	cycleRemaining--;
 }
@@ -544,7 +544,7 @@ std::ostream& operator<<(std::ostream &out,CPU &cpu) // For logging
 {
 	out << "REGISTERS: " << std::endl;
 	out << "A: " << bTohex(cpu.A,2) << std::endl << "X: " << bTohex(cpu.X,2) << std::endl << "Y: " << bTohex(cpu.Y,2) << std::endl << "SP: " << bTohex(cpu.SP,2) << std::endl;
-	out << "PROGRAM COUNTER: " << bTohex(cpu.programCounter,4) << std::endl;
+	out << "PROGRAM clock: " << bTohex(cpu.programCounter,4) << std::endl;
 
 	return out;
 }
@@ -572,7 +572,7 @@ void CPU::reset()
 	STATUS.INTERRUPT = 1;
 	STATUS.DECIMAL = 0;
 
-	COUNTER = 0;
+	clock = 0;
 
 	cycleRemaining = 8;
 }
@@ -907,7 +907,7 @@ CPU::OPEXEC CPU::EOR(ADDRESS source)
 
 CPU::OPEXEC CPU::INC(ADDRESS source)
 {
-	BYTE data = (bus.readFromMemory(source) + 1) % 256;
+	BYTE data = (bus.readFromMemory(source) + 1);
 	STATUS.ZERO = (data == 0x00) ? 1 : 0;
 	STATUS.NEGATIVE = (data & 0x80) ? 1 : 0;
 	bus.writeToMemory(source,data);
@@ -915,14 +915,14 @@ CPU::OPEXEC CPU::INC(ADDRESS source)
 
 CPU::OPEXEC CPU::INX_OP(ADDRESS source)
 {
-	X = (X + 1) % 256;
+	X = (X + 1);
 	STATUS.ZERO = (X == 0x00) ? 1 : 0;
 	STATUS.NEGATIVE = (X & 0x80) ? 1 : 0;
 };
 
 CPU::OPEXEC CPU::INY_OP(ADDRESS source)
 {
-	Y = (Y + 1) % 256;
+	Y = (Y + 1);
 	STATUS.ZERO = (Y == 0x00) ? 1 : 0;
 	STATUS.NEGATIVE = (Y & 0x80) ? 1 : 0;
 };

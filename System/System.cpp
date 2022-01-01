@@ -41,18 +41,35 @@ void NES::insertNESFile(std::string fileName)
         file.seekg(512,std::ios_base::cur);
         std::cout << "MAGIC CHARS: " << header.name << std::endl;
         BYTE mapperID = ((header.mapper2 >> 4) << 4) | (header.mapper1 >> 4);
-        cartridge.setPRGNum(header.PRGROMChunks);
-        BYTE* PRGmem = new BYTE[header.PRGROMChunks * 16384];
-        file.read((char*) PRGmem,header.PRGROMChunks * 16384);
-        cartridge.loadPRGData(PRGmem);
-        cartridge.setCHRNum(header.CHRROMChunks);
-        BYTE* CHRmem;
-        if(header.CHRROMChunks == 0) // If it is CHR RAM
-            CHRmem = new BYTE[8192];
+        bool isNES2 = (header.mapper2 & 0x0C) == 0x08;
+        if(!isNES2)
+        {
+            std::cout << "NES File Type : 1.0" << std::endl;
+            cartridge.setPRGNum(header.PRGROMChunks);
+            BYTE* PRGmem = new BYTE[header.PRGROMChunks * 16384];
+            file.read((char*) PRGmem,header.PRGROMChunks * 16384);
+            cartridge.loadPRGData(PRGmem);
+            cartridge.setCHRNum(header.CHRROMChunks);
+            BYTE* CHRmem;
+            if(header.CHRROMChunks == 0) // If it is CHR RAM
+                CHRmem = new BYTE[8192];
+            else
+                CHRmem = new BYTE[header.CHRROMChunks * 8192];
+            file.read((char*) CHRmem,(header.CHRROMChunks != 0 ? header.CHRROMChunks : 1) * 8192);
+            cartridge.loadCHRData(CHRmem);
+        }
         else
-            CHRmem = new BYTE[header.CHRROMChunks * 8192];
-        file.read((char*) CHRmem,(header.CHRROMChunks != 0 ? header.CHRROMChunks : 1) * 8192);
-        cartridge.loadCHRData(CHRmem);
+        {
+            std::cout << "NES File Type : 2.0" << std::endl;
+            cartridge.setPRGNum(((header.PRGRAMSize & 0x07) << 8) | header.PRGROMChunks);
+            BYTE* PRGmem = new BYTE[cartridge.getPRGNum() * 16384];
+            file.read((char*) PRGmem,cartridge.getPRGNum() * 16384);
+            cartridge.loadPRGData(PRGmem);
+            cartridge.setCHRNum(((header.PRGRAMSize & 0x38) << 8) | header.CHRROMChunks);
+            BYTE* CHRmem = new BYTE[cartridge.getCHRNum() * 8192];
+            file.read((char*) CHRmem,cartridge.getCHRNum() * 8192);
+            cartridge.loadCHRData(CHRmem);
+        }
         std::cout << "Mapper ID:" << mapperID;
         cartridge.setMapperID(mapperID);
         setMapper();
@@ -72,6 +89,7 @@ void NES::setMapper()
     {
     case 0:mapper = std::make_shared<Mapper0>(&cartridge);break;   
     case 1:mapper = std::make_shared<Mapper1>(&cartridge);break; 
+    case 2:mapper = std::make_shared<Mapper2>(&cartridge);break; 
     default:
         break;
     }

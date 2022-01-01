@@ -13,17 +13,20 @@ class Mapper1 : public MapperBase
         virtual BYTE MapReadPpu(ADDRESS address) final;
         virtual void MapWritePpu(ADDRESS address,BYTE value) final;
     private:
-        void reset();
-        BYTE PRGRAM[32*1024];
+        void resetRegisters();
+        void updatePRG();
+        void updateCHR();
+        void updateMirroring();
+        BYTE PRGRAM[8*1024];
         struct {
             BYTE controlReg = 0x00,tempReg = 0x00,tempRegNum = 0x00;
         } REGISTERS;
-        BYTE CHRreg0 = 0x00;
-        BYTE CHRreg1 = 0x00;
-        BYTE CHRregFull = 0x00;
-        BYTE PRGreg0 = 0x00;
-        BYTE PRGreg1 = 0x00;
-        BYTE PRGregFull = 0x00;
+        BYTE CHR0 = 0x00;
+        BYTE CHR1 = 0x00;
+        BYTE CHRFull = 0x00;
+        BYTE PRG0 = 0x00;
+        BYTE PRG1 = 0x00;
+        BYTE PRGFull = 0x00;
 };
 
 

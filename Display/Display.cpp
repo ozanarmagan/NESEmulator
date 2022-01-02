@@ -1,13 +1,41 @@
 #include "Display.h"
 
 
+void func_callback(void *unused, Uint8 *stream, int len) {
+
+    for (int i=0;i<len;i++) {
+        stream[i] = i;
+    }
+}
 
 
-Display::Display(SDL_Event* event,Controller& controller) : eventPtr(event),controller(controller)
+Display::Display(SDL_Event* event,Controller& controller,Audio& audio) : eventPtr(event),controller(controller),audio(audio)
 {
-    if(SDL_Init(SDL_INIT_EVERYTHING) < 0)
+    if(SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER) != 0)
         std::cout << "ERROR: SDL Couldn't initialized!\n";
     init();
+
+    SDL_AudioSpec audiospec;
+    SDL_AudioSpec got;
+
+    audiospec.freq     = 44100;
+    audiospec.format   = AUDIO_S16SYS;
+    audiospec.samples  = 512;
+    audiospec.channels = 1;
+    audiospec.callback = func_callback;
+
+    auto audio_open = SDL_OpenAudioDevice(0,0,&audiospec,&got,0);
+
+    if(audio_open == 0)
+        std::cout << "ERROR! " << SDL_GetError() << std::endl;
+
+    std::cout << "Audio Device Initialized\n";
+    std::cout << "Device Name: " << SDL_GetAudioDeviceName(audio_open,0) << std::endl;
+    std::cout << "Frequency: " << got.freq << std::endl;
+    std::cout << "Samples: " << got.samples << std::endl;
+    std::cout << "Channels: " << (int)got.channels  << std::endl;
+    
+    SDL_PauseAudio(0);
 
 #ifdef DEBUG
     initDebug();

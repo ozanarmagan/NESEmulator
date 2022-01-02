@@ -11,12 +11,11 @@ namespace{
 }
 
 
-NES::NES() : cartridge(),ppuBus(),bus(ppuBus),ppu(&display,&bus,&cartridge,&ppuBus),cpu(bus),controller(&bus),display(&events,controller)
+NES::NES() : cartridge(),ppuBus(),audio(&audioQueue),bus(ppuBus),ppu(&display,&bus,&cartridge,&ppuBus),cpu(bus),controller(&bus),display(&events,controller,audio),apu()
 {
-
 }
 
-NES::NES(std::string fileName) : cartridge(),ppuBus(),bus(ppuBus),ppu(&display,&bus,&cartridge,&ppuBus),cpu(bus),controller(&bus),display(&events,controller)
+NES::NES(std::string fileName) : cartridge(),audio(&audioQueue),ppuBus(),bus(ppuBus),ppu(&display,&bus,&cartridge,&ppuBus),cpu(bus),controller(&bus),display(&events,controller,audio),apu()
 {
     insertNESFile(fileName);   
 }
@@ -122,15 +121,25 @@ void NES::mainLoop()
 {
     RUN_FOREVER
     {
-        do
+        // do
+        //     tick();
+        // while(!ppu.isFrameDone());
+        innerClock = 0;
+        for(int i = 0;i < cyclesPerBuffer;i++)
+        {
             tick();
-        while(!ppu.isFrameDone());
+            if(innerClock++ >= cyclesPerSample)
+            {
+                audioQueue.insert(apu.output());
+                innerClock -= cyclesPerSample;
+            }
+        }
         display.renderFrame();
 #ifdef DEBUG
         ppu.getPatternTable();
         display.renderDebugFrame();
 #endif
-        ppu.clearFrameDone();
+        // ppu.clearFrameDone();
     }
 }
 
@@ -138,6 +147,9 @@ void NES::mainLoop()
 void NES::tick()
 {
     ppu.tick();
+
+    apu.tick();
+
 
     if(clock % 3 == 0) // PPU of NES is 3x faster than CPU in clock-speed wise,so there happens a CPU tick for every PPU tick (which also means a system tick)
     {

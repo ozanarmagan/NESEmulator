@@ -29,7 +29,7 @@ class PPU
 #endif
         };
         void tick();
-        const bool inline isFrameDone() { return frameDone; };
+        const FLAG inline isFrameDone() { return frameDone; };
         void clearFrameDone() { frameDone = false; };
         friend std::ostream& operator<<(std::ostream &out,PPU &ppu); // For logging stuff
 #ifdef DEBUG
@@ -42,7 +42,7 @@ class PPU
         Display* display;
         BYTE PPU_BUFFER;
         short int col = 0,row = 0;
-        bool frameDone = false;
+        FLAG frameDone = false;
         Array<OBJECT_ATTRIBUTE> nextRowSprites; 
         void shift();
         void frameReset();
@@ -54,9 +54,9 @@ class PPU
         void loadShifters();
         BYTE pixel = 0x00;
         BYTE palette = 0x00;
-        bool spriteZeroIndicator = false;
-        bool spriteZero = false;
-        bool odd = false;
+        FLAG spriteZeroIndicator = false;
+        FLAG spriteZero = false;
+        FLAG odd = false;
 #ifdef PPUDEBUG
         FILE* ppuLog;
         void log();

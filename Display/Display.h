@@ -2,6 +2,7 @@
 #define DISPLAY_H
 #define SDL_MAIN_HANDLED
 #include "../Utils/handler.h"
+#include "../Audio/Audio.h"
 #include "../Controller/Controller.h"
 #include <SDL2/SDL.h>
 
@@ -10,7 +11,7 @@
 class Display
 {
     public:
-        Display(SDL_Event* event,Controller& controller);
+        Display(SDL_Event* event,Controller& controller,Audio& audio);
         void init();
         void initDebug();
         void setPixel(int x, int y, PIXEL_RGB pixelColors);
@@ -32,7 +33,8 @@ class Display
         SDL_Texture *Dtexture;
         SDL_Event *eventPtr;
         Controller& controller;
-        TIME interval0 = 0,interval1 = 0;
+        Audio& audio;
+        TIMER interval0 = 0,interval1 = 0;
 };
 
 #endif

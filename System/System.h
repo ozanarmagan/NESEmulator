@@ -12,8 +12,11 @@
 #include "../Bus/PPUBus.h"
 #include "../PPU/PPU.h"
 #include "../CPU/CPU.h"
+#include "../APU/APU.h"
 #include "../Display/Display.h"
 #include "../Controller/Controller.h"
+#include "../Audio/Audio.h"
+#include "../Utils/Queue.h"
 
 class NES
 {
@@ -30,7 +33,9 @@ class NES
         PPUBus ppuBus;
         Bus bus;
         PPU ppu;
+        APU apu;
         CPU cpu;    
+        Audio audio;
         Display display;
         void setMapper();
         void mainLoop();
@@ -39,4 +44,8 @@ class NES
         uint64_t clock = 0;
         SDL_Event events;
         Controller controller;
+        Queue<AUDIO> audioQueue;
+        double innerClock;
+        inline static double cyclesPerSample = (21.477272 / 4) * 1000000 / 44100;
+        inline static double cyclesPerBuffer = ((21.477272 / 4) * 1000000 / 44100) * 512;
 };

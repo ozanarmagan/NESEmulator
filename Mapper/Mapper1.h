@@ -8,10 +8,10 @@ class Mapper1 : public MapperBase
 {
     public:
         Mapper1(Cartridge *cart);
-        virtual BYTE MapReadCpu(ADDRESS address) final;
-        virtual void MapWriteCpu(ADDRESS address,BYTE value) final;
-        virtual BYTE MapReadPpu(ADDRESS address) final;
-        virtual void MapWritePpu(ADDRESS address,BYTE value) final;
+        BYTE MapReadCpu(ADDRESS address) override;
+        void MapWriteCpu(ADDRESS address,BYTE value) override;
+        BYTE MapReadPpu(ADDRESS address) override;
+        void MapWritePpu(ADDRESS address,BYTE value) override;
     private:
         void resetRegisters();
         void updatePRG();

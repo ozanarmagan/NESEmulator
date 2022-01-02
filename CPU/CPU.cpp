@@ -682,7 +682,7 @@ CPU::OPEXEC CPU::ADC(ADDRESS source)
 	ADDRESS temp = (ADDRESS) data + (ADDRESS) A + (ADDRESS)(STATUS.CARRY ? 1 : 0);
 	STATUS.CARRY = temp > 255 ? 1 : 0;
 
-	STATUS.ZERO = (temp & 0x00FF) == 0 ? 1 : 0;
+STATUS.ZERO = (temp & 0x00FF) == 0 ? 1 : 0;
 
 	STATUS.OVERFLOW = ((~((ADDRESS)A ^ (ADDRESS) data) & ((ADDRESS)A ^ (ADDRESS)temp)) & 0x0080) ? 1 : 0;
 

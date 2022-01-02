@@ -7,14 +7,14 @@ Controller::Controller(Bus* bus) : bus(bus) {
     if(SDL_NumJoysticks() > 0) 
     {
         contorller1 = SDL_GameControllerOpen(0);
-        std::cout << "Found GameController:\n";
+        std::cout << "Found Game Controller:\n";
         std::cout << "Name: " << SDL_GameControllerNameForIndex(0) << std::endl;
 
     } 
     if(SDL_NumJoysticks() > 1) 
     {
         contorller2 = SDL_GameControllerOpen(1);
-        std::cout << "Found GameController:\n";
+        std::cout << "Found Game Controller:\n";
         std::cout << "Name: " << SDL_GameControllerNameForIndex(1) << std::endl;
     } 
 }

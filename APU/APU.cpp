@@ -3,14 +3,24 @@
 constexpr BYTE LENGTH_COUNTER::LookUpTable[];
 constexpr AUDIO Noise::timerLookUpTable[];
 
-AUDIO APU::output()
-{
-    AUDIO pulse1   = 200 * (AUDIO) channel1.output();
-    AUDIO pulse2   = 200 * (AUDIO) channel2.output();
-    AUDIO triangle = 500 * (AUDIO) channel3.output();
-    AUDIO noise    = 200 * (AUDIO) channel4.output();
 
-    return pulse1 + pulse2 + triangle + noise;
+APU::APU()
+{
+    channel1.channel = 1;
+    channel2.channel = 2;
+    // Fill output look-up tables
+    for (int i = 0; i < 31; i++) {
+        pulseTable[i] = 95.52 / (8128.0/i + 100);
+    }
+    for (int j = 0; j < 203; j++) {
+        tndTable[j] = 163.67 / (24329.0/j + 100);
+    }
+}
+
+
+float APU::output()
+{
+	return pulseTable[channel1.output() + channel2.output()] + tndTable[3 * channel3.output() + 2 * channel4.output()];
 }
 
 void APU::quarterTick()
@@ -45,14 +55,13 @@ void APU::tick()
         channel3.tick();
         channel4.tick();
 
-        if(fmod(frameClock,3728.5) == 0)
-        {
-            if(!halfFrame)
-                quarterTick();
-            else
-                halfTick();
-            halfFrame = !halfFrame;
-        }
+
+        if(frameClock == 3728.5 || frameClock == 11185.5)
+            quarterTick();
+        if(frameClock == 7456.5 || (fiveStepMode == false && frameClock == 14914.5) || frameClock == 18640.5)
+            halfTick();
+
+
         if(frameClock == (fiveStepMode ?  18641 : 14915))
             frameClock = 0.0;
         

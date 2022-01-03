@@ -5,8 +5,10 @@
 #include "../Audio/Audio.h"
 #include "../Controller/Controller.h"
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_audio.h>
+#include <stdio.h>
 
-#define DEBUG
+//#define DEBUG
 
 class Display
 {

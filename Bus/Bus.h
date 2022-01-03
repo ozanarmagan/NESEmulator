@@ -7,12 +7,11 @@
 #include "PPUBus.h"
 #include "../Cartridge/Cartridge.h"
 #include "../Mapper/MapperBase.h"
-#include "../Mapper/Mapper0.h"
-
+#include "../APU/APU.h"
 class Bus
 {
     public:
-        Bus(PPUBus& ppuBus) : ppuBus(ppuBus) { };
+        Bus(PPUBus& ppuBus,APU& apu) : ppuBus(ppuBus),apu(apu) { };
         BYTE readFromMemory(ADDRESS address);
         void writeToMemory(ADDRESS address,BYTE value);
         void clearMemoryBlock(ADDRESS start,ADDRESS end);
@@ -28,6 +27,7 @@ class Bus
         BYTE controllerCache[2]; // Temporary cache to write in every frame
         BYTE controllerMemory[2]; // Bytes for controllers
         PPUBus& ppuBus; 
+        APU& apu;
         std::shared_ptr<MapperBase> mapper;
         bool DMA = false,DMA_dummy = true;
         BYTE DMA_low  = 0x00;

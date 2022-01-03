@@ -24,7 +24,7 @@ void Queue<T>::insert(const T& val)
 {
     if(++total == capacity)
         increaseCapacity();
-    head[total] = val;
+    head[total - 1] = val;
 }
 
 template <typename T>

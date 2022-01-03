@@ -22,11 +22,16 @@ struct ENVELOPE
             divider = volume;
             return;
         }
-        if(divider-- == 0xFF)
+        if(divider == 0xFF)
         {
             divider = volume;
-            decay = ((--decay == 0 && loop) ? 0X0F : decay);
+            if(decay > 0)
+                decay--;
+            else if(loop)
+                decay = 0x0F;
         }
+        else
+            divider--;
     }
 };
 
@@ -83,14 +88,18 @@ struct PulseWave
     void sweeperTick()
     {
         if(targetPeriod > 0x07FF || timerStart < 8)
-            sweeperEnabled = false;
-        if(sweeperEnabled && !sweeperDivider)
+            sweeperMuted = true;
+        else
+            sweeperMuted = false;
+        if(sweeperEnabled && !sweeperDivider && !sweeperMuted)
             timerStart = targetPeriod;
-        if(sweeperDivider-- == 0 || sweeperReload)
+        if(sweeperDivider == 0 || sweeperReload)
         {
             sweeperDivider = sweeperReloadTime;
             sweeperReload = false;
         }
+        else
+            sweeperDivider--;
 
     }
 
@@ -106,7 +115,7 @@ struct PulseWave
 
     BYTE output()
     {
-        if(lengthCounter.length > 0 && timerStart > 8)
+        if(lengthCounter.length > 0 && timerStart > 8 && !sweeperMuted)
             return ((sequencer & 0x80) >> 7) * (envelope.constantVolume ? envelope.volume : envelope.decay);
         return 0x00;
     }    
@@ -151,7 +160,7 @@ struct TriangleWave
     void sequencerTick()
     {
         if(++sequencerTimer == 32)
-        sequencerTimer = 0;
+            sequencerTimer = 0;
     }
 
     BYTE output()
@@ -184,14 +193,17 @@ struct Noise
 
     ENVELOPE envelope;
 
-    BYTE shiftRegister;
+    BYTE shiftRegister = 0x0001;
     FLAG fastShift;
 
     void shiftTick()
     {
         shiftRegister >>= 1;
-        
-        BYTE feed = shiftRegister & 0x01 ^ (shiftRegister & 0x02) >> (fastShift ? 6 : 1);
+        BYTE feed;
+        if (fastShift)
+				feed = shiftRegister & 0x0001 ^ (shiftRegister & 0x0040) >> 6;
+		else 
+				feed = shiftRegister & 0x0001 ^ (shiftRegister & 0x0002) >> 1;
 
         if(feed)
             SET_BIT(shiftRegister,14);

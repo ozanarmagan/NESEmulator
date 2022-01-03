@@ -10,12 +10,8 @@
 class Audio
 {
     public:
-        Audio(Queue<AUDIO>* queuePtr) {audioQueue = queuePtr; };
-        void init();
-        void audioCallback(BYTE* stream,int len);
-        static void staticCallback(void* userData,BYTE* stream,int len);
+        void addToQueue(float sample);
     private:
-        Queue<AUDIO>* audioQueue = nullptr;
 };
 
 

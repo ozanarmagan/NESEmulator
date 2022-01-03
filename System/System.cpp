@@ -11,11 +11,11 @@ namespace{
 }
 
 
-NES::NES() : cartridge(),ppuBus(),audio(&audioQueue),bus(ppuBus),ppu(&display,&bus,&cartridge,&ppuBus),cpu(bus),controller(&bus),display(&events,controller,audio),apu()
+NES::NES() : cartridge(),apu(),ppuBus(),audio(),bus(ppuBus,apu),ppu(&display,&bus,&cartridge,&ppuBus),cpu(bus),controller(&bus),display(&events,controller,audio)
 {
 }
 
-NES::NES(std::string fileName) : cartridge(),audio(&audioQueue),ppuBus(),bus(ppuBus),ppu(&display,&bus,&cartridge,&ppuBus),cpu(bus),controller(&bus),display(&events,controller,audio),apu()
+NES::NES(std::string fileName) : cartridge(),apu(),audio(),ppuBus(),bus(ppuBus,apu),ppu(&display,&bus,&cartridge,&ppuBus),cpu(bus),controller(&bus),display(&events,controller,audio)
 {
     insertNESFile(fileName);   
 }
@@ -130,7 +130,7 @@ void NES::mainLoop()
             tick();
             if(innerClock++ >= cyclesPerSample)
             {
-                audioQueue.insert(apu.output());
+                audio.addToQueue(apu.output());
                 innerClock -= cyclesPerSample;
             }
         }

@@ -39,6 +39,8 @@ void Bus::writeToMemory(ADDRESS address,BYTE value)
         memory[address & 0x07FF] = value;
     else if(address >= 0x2000 && address <= 0x3FFF)
         ppuBus.writeToMemory_mainBus(address & 0x0007,value);
+    else if((address >= 0x4000 && address <= 0x4013) || address == 0x4015 || address == 0x4017)
+        apu.writeToMemory(address - 0x4000,value);
     else if(address == 0x4014) // DMA Activated
     {
         DMA = true;

@@ -1,17 +1,10 @@
 #include "Display.h"
 
 
-void func_callback(void *unused, Uint8 *stream, int len) {
-
-    for (int i=0;i<len;i++) {
-        stream[i] = i;
-    }
-}
-
 
 Display::Display(SDL_Event* event,Controller& controller,Audio& audio) : eventPtr(event),controller(controller),audio(audio)
 {
-    if(SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER) != 0)
+    if(SDL_Init(SDL_INIT_EVERYTHING) != 0)
         std::cout << "ERROR: SDL Couldn't initialized!\n";
     init();
 
@@ -19,14 +12,15 @@ Display::Display(SDL_Event* event,Controller& controller,Audio& audio) : eventPt
     SDL_AudioSpec got;
 
     audiospec.freq     = 44100;
-    audiospec.format   = AUDIO_S16SYS;
+    audiospec.format   = AUDIO_F32SYS;
     audiospec.samples  = 512;
     audiospec.channels = 1;
-    audiospec.callback = func_callback;
+    audiospec.callback = NULL;
 
-    auto audio_open = SDL_OpenAudioDevice(0,0,&audiospec,&got,0);
 
-    if(audio_open == 0)
+    auto audio_open = SDL_OpenAudio(&audiospec,NULL);
+
+    if(audio_open < 0)
         std::cout << "ERROR! " << SDL_GetError() << std::endl;
 
     std::cout << "Audio Device Initialized\n";

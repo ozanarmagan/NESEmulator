@@ -14,7 +14,7 @@
 
 
 #define CYCLES_PER_SAMPLE 
-#define CYCLES_PER_BUFFER CYCLES_PER_SAMPLE * 512
+#define CYCLES_PER_BUFFER CYCLES_PER_SAMPLE * 1024
 
 
 #define SET_BIT(byte,bit)   ((byte) |=  (1<<(bit)))

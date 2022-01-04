@@ -12,6 +12,8 @@
 #define DEBUG_HEIGHT 270
 
 
+#define PI 3.14159265359
+
 
 #define CYCLES_PER_SAMPLE 
 #define CYCLES_PER_BUFFER CYCLES_PER_SAMPLE * 1024
@@ -31,6 +33,7 @@ typedef uint32_t PIXEL;
 typedef uint32_t ADDRESS32;
 typedef uint64_t TIMER;
 typedef uint8_t FLAG;
+typedef uint32_t HERTZ;
 
 struct FileHeader  // iNES File Header
 {

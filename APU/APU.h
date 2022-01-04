@@ -5,7 +5,7 @@
 
 #include "../Utils/handler.h"
 #include "Waves.h"
-
+#include "../Utils/AudioFilters.h"
 
 
 
@@ -31,7 +31,11 @@ class APU
         void halfTick(); // Tick in every half
         float pulseTable[31];
         float tndTable [203]; // This two table for outputs of APU,they can be calculated real time but a look-up table will reduce computation
+        HighPassFilter high1;
+        HighPassFilter high2;
+        LowPassFilter low;
 };
+
 
 
 

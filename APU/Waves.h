@@ -7,6 +7,7 @@
 struct ENVELOPE
 {
     BYTE divider;
+    BYTE dividerPeriod;
     BYTE volume;
     BYTE decay;
     FLAG constantVolume;
@@ -19,12 +20,12 @@ struct ENVELOPE
         {
             start = false;
             decay = 0x0F;
-            divider = volume;
+            divider = dividerPeriod;
             return;
         }
-        if(divider == 0xFF)
+        if(divider == 0)
         {
-            divider = volume;
+            divider = dividerPeriod;
             if(decay > 0)
                 decay--;
             else if(loop)
@@ -33,7 +34,14 @@ struct ENVELOPE
         else
             divider--;
     }
+
+    BYTE output()
+    {
+        return constantVolume ? volume : decay;
+    }
 };
+
+
 
 struct LENGTH_COUNTER
 {
@@ -52,13 +60,14 @@ struct LENGTH_COUNTER
 struct PulseWave
 {   
     BYTE channel;
+    FLAG enabled;
     AUDIO timer;
-    AUDIO timerStart;
+    AUDIO timerPeriod;
     void timerTick()
     {
         if(--timer == 0xFFFF)
         {
-            timer = timerStart;
+            timer = timerPeriod;
             sequencerTick();
         }
     }
@@ -79,23 +88,27 @@ struct PulseWave
 
     void sweeperUpdate()
     {   
-        change = (sweeperNegative ? -(timerStart >> shiftCount) :  (timerStart >> shiftCount));
-        if(sweeperNegative && channel == 1)
-            change -= 1;
-        targetPeriod = timerStart + change;
+        change = timerPeriod >> shiftCount;
+        if(sweeperNegative)
+        {
+            change = -change;
+            if(channel == 1)
+                change -= 1;
+        }
+        targetPeriod = timerPeriod + change;
     }
 
     void sweeperTick()
     {
-        if(targetPeriod > 0x07FF || timerStart < 8)
+        if(targetPeriod > 0x07FF)
             sweeperMuted = true;
         else
             sweeperMuted = false;
         if(sweeperEnabled && !sweeperDivider && !sweeperMuted)
-            timerStart = targetPeriod;
+            timerPeriod = targetPeriod;
         if(sweeperDivider == 0 || sweeperReload)
         {
-            sweeperDivider = sweeperReloadTime;
+            sweeperDivider = sweeperReloadTime + 1;
             sweeperReload = false;
         }
         else
@@ -103,20 +116,21 @@ struct PulseWave
 
     }
 
-    BYTE sequencer;
+
     BYTE sequence;
     double dutyCycle;
-
+    BYTE sequencerClock = 0;
     void sequencerTick()
     {
-        sequencer = sequencer >> 1 | (sequencer & 0x01) << 7;
+        sequencerClock++;
+        sequencerClock = sequencerClock % 8;
     }
 
 
     BYTE output()
     {
-        if(lengthCounter.length > 0 && timerStart > 8 && !sweeperMuted)
-            return ((sequencer & 0x80) >> 7) * (envelope.constantVolume ? envelope.volume : envelope.decay);
+        if(enabled && lengthCounter.length > 0 && timerPeriod > 8 && !sweeperMuted && timerPeriod < 0x7FF)
+            return CHECK_BIT(sequence,sequencerClock) * envelope.output();
         return 0x00;
     }    
 };
@@ -126,19 +140,19 @@ struct PulseWave
 struct TriangleWave
 {
     AUDIO timer;
-    AUDIO timerStart;
-
+    AUDIO timerPeriod;
+    FLAG enabled;
     void tick()
     {
         if(--timer == 0xFFFF)
         {
-            timer = timerStart;
+            timer = timerPeriod;
             if(counter > 0 && lengthCounter.length > 0)
                 sequencerTick();
         }
     }
     LENGTH_COUNTER lengthCounter;
-    
+    static constexpr BYTE sequenceTable [] = {15, 14, 13, 12, 11, 10,  9,  8,  7,  6,  5,  4,  3,  2,  1,  0, 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15};
     BYTE counter;
     BYTE counterStart;
     FLAG counterReload;
@@ -159,14 +173,15 @@ struct TriangleWave
     
     void sequencerTick()
     {
-        if(++sequencerTimer == 32)
-            sequencerTimer = 0;
+        if(counter > 0 && lengthCounter.length > 0)
+            if(++sequencerTimer == 32)
+                sequencerTimer = 0;
     }
 
     BYTE output()
     {
-        if(timerStart > 2)
-            return (sequencerTimer <= 15) ? (15 - sequencerTimer) : (sequencerTimer - 16);
+        if(enabled &&  lengthCounter.length > 0 && counter > 0)
+            return sequenceTable[sequencerTimer];
         return 0x00;
     }
 
@@ -176,15 +191,15 @@ struct TriangleWave
 struct Noise
 {
     AUDIO timer;
-    AUDIO timerStart;
+    AUDIO timerPeriod;
     static constexpr AUDIO timerLookUpTable[] = {4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068}; // WARNING: This table is NTSC standard only!
-    
+    FLAG enabled;
 
     void tick()
     {
         if(--timer == 0xFFFF)
         {
-            timer = timerStart;
+            timer = timerPeriod;
             shiftTick();
         }
     }
@@ -193,26 +208,24 @@ struct Noise
 
     ENVELOPE envelope;
 
-    BYTE shiftRegister = 0x0001;
+    AUDIO shiftRegister = 0x0001;
     FLAG fastShift;
 
     void shiftTick()
     {
-        shiftRegister >>= 1;
         BYTE feed;
-        if (fastShift)
-				feed = shiftRegister & 0x0001 ^ (shiftRegister & 0x0040) >> 6;
-		else 
-				feed = shiftRegister & 0x0001 ^ (shiftRegister & 0x0002) >> 1;
-
+        if(fastShift)
+            feed = CHECK_BIT(shiftRegister,0) ^ CHECK_BIT(shiftRegister,6);
+        else
+            feed = CHECK_BIT(shiftRegister,0) ^ CHECK_BIT(shiftRegister,1);
         if(feed)
-            SET_BIT(shiftRegister,14);
+            shiftRegister |=  1 << 14;
     }
     
     BYTE output()
     {
-        if(lengthCounter.length > 0)
-            return (shiftRegister & 0x01) * (envelope.constantVolume ? envelope.volume : envelope.decay);
+        if(enabled && lengthCounter.length > 0 && (shiftRegister & 0x0001 == 0))
+            return envelope.output();
         return 0x00;
     }    
 };

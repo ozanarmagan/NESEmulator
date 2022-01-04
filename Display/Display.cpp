@@ -25,9 +25,9 @@ Display::Display(SDL_Event* event,Controller& controller,Audio& audio) : eventPt
 
     std::cout << "Audio Device Initialized\n";
     std::cout << "Device Name: " << SDL_GetAudioDeviceName(audio_open,0) << std::endl;
-    std::cout << "Frequency: " << got.freq << std::endl;
-    std::cout << "Samples: " << got.samples << std::endl;
-    std::cout << "Channels: " << (int)got.channels  << std::endl;
+    std::cout << "Frequency: " << audiospec.freq << std::endl;
+    std::cout << "Samples: " << audiospec.samples << std::endl;
+    std::cout << "Channels: " << (int)audiospec.channels  << std::endl;
     
     SDL_PauseAudio(0);
 

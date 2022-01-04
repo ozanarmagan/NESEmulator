@@ -1,6 +1,6 @@
-CXX = g++
+CXX = g++ 
 CCXXFLAGS =  -lSDL2 -lSDL2main
-LDFLAGS = -O3
+LDFLAGS = -O3 -std=c++17
 
 SRC = $(wildcard */*.cpp) *.cpp 
 OBJ = $(SRC:.cc=.o)

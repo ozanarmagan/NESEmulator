@@ -49,7 +49,6 @@ class LowPassFilter : FilterBase
 
     https://en.wikipedia.org/wiki/High-pass_filter
 */
-
 class HighPassFilter : FilterBase
 {
     public:

@@ -1,221 +1,210 @@
 #include "APU.h"
 
-constexpr BYTE LENGTH_COUNTER::LookUpTable[];
-constexpr AUDIO Noise::timerLookUpTable[];
 
 
-APU::APU() : low(14000),high1(90),high2(440)
+APU::APU() : high1(90),high2(440),low(14000)
 {
-    channel1.channel = 1;
-    channel2.channel = 2;
-    // Fill output look-up tables
-    for (int i = 0; i < 31; i++) {
-        pulseTable[i] = 95.52 / (8128.0/i + 100);
-    }
-    for (int j = 0; j < 203; j++) {
-        tndTable[j] = 163.67 / (24329.0/j + 100);
-    }
+    for(int i = 0;i < 31;i++)
+        pulseTable[i] =  95.52 / (8128.0 / i + 100);
+    for(int i = 0;i < 203;i++)
+        tndTable[i]   =  163.67 / (24329.0 / i + 100);
 }
 
-
-float APU::output()
-{
-	double output = pulseTable[channel1.output() + channel2.output()] + tndTable[3 * channel3.output() + 2 * channel4.output()];
-    output = high1.filter(output);
-    output = high2.filter(output);
-    output = low.filter(output);
-    return output;
-}
 
 void APU::quarterTick()
 {
-    channel1.envelope.tick();
-    channel2.envelope.tick();
-    channel3.counterTick();
-    channel4.envelope.tick();
+    pulse1.envelope.tick();
+    pulse2.envelope.tick();
+    triangle.linearCounterTick();
+    noise.envelope.tick();
 }
 
 void APU::halfTick()
 {
-    quarterTick(); // Every half frame is also a quarter frame
-    
-    channel1.lengthCounter.tick();
-    channel2.lengthCounter.tick();
-    channel3.lengthCounter.tick();
-    channel4.lengthCounter.tick();
+    quarterTick();
 
-    channel1.sweeperTick();
-    channel2.sweeperTick();
+    pulse1.lengthCounter.tick();
+    pulse2.lengthCounter.tick();
+    triangle.lengthCounter.tick();
+    noise.lengthCounter.tick();
+
+    pulse1.sweeper.tick();
+    pulse2.sweeper.tick();
 }
 
 void APU::tick()
 {
-    channel1.sweeperUpdate();
-    channel2.sweeperUpdate();
-
-    if(clock % 3 == 0)
+    pulse1.sweeper.calculateTargetPeriod();
+    pulse2.sweeper.calculateTargetPeriod();
+    if(incomingFrameCounterReset)
     {
-        frameClock += 0.5;
-        channel3.tick();
-        channel4.tick();
-
-
-        if(frameClock == 3728.5 || frameClock == 11185.5)
-            quarterTick();
-        if(frameClock == 7456.5 || (fiveStepMode == false && frameClock == 14914.5) || frameClock == 18640.5)
-            halfTick();
-
-
-        if(frameClock == (fiveStepMode ?  18641 : 14915))
-            frameClock = 0.0;
-        
-        if(pulseTimer)
+        if(countToFrameCounterReset == 0)
         {
-            channel1.timerTick();
-            channel2.timerTick();
+            incomingFrameCounterReset = false;
+            frameCounter = 0;
         }
+        else
+            countToFrameCounterReset--;
+    }
 
-        pulseTimer = !pulseTimer;
+    triangle.tick();
+
+    if(clock % 2 == 0) // APU clocks in every-other-CPU-cycle
+    {
+
+        frameCounter++;
+
+        if(frameCounter == 3729 || frameCounter == 11186)
+            quarterTick();
+        if((frameCounterMode == FRAMECOUNTERMODE::MODE5 && frameCounter == 18641) || (frameCounterMode == FRAMECOUNTERMODE::MODE4 && frameCounter == 14915) || frameCounter == 7457)
+            halfTick();
+        if((frameCounterMode == FRAMECOUNTERMODE::MODE5 && frameCounter == 18641) || (frameCounterMode == FRAMECOUNTERMODE::MODE4 && frameCounter == 14915))
+            frameCounter = 0;
+        
+        pulse1.tick();
+        pulse2.tick();
+        noise.tick();
     }
 
     clock++;
 }
 
 
+
 void APU::writeToMemory(ADDRESS address,BYTE value)
 {
     switch (address)
     {
-        case 0x000:
-                channel1.envelope.volume = value & 0x0F;
-                channel1.envelope.dividerPeriod = value & 0x0F;
-                channel1.envelope.constantVolume = (value & 0x10) ? true : false;
-                channel1.lengthCounter.halt = (value & 0x20) ? true : false;
-                channel1.envelope.loop = (value & 0x20) ? true : false;
-                channel1.sequencerClock = 0;
-                switch ((value & 0xC0) >> 6)
-                {
-                case 0:
-                    channel1.sequence = 0b01000000;
-                    channel1.dutyCycle = 0.125;
-                    break;
-                case 1:
-                    channel1.sequence = 0b01100000;
-                    channel1.dutyCycle = 0.250;
-                    break;
-                case 2:
-                    channel1.sequence = 0b01111000;
-                    channel1.dutyCycle = 0.500;
-                    break;
-                case 3:
-                    channel1.sequence = 0b10011111;
-                    channel1.dutyCycle = 0.750;
-                    break;
-                }
-                break;
-        
-        case 0x0001:
-            channel1.shiftCount = value & 0x07;
-            channel1.sweeperNegative = (value & 0x08) ? true : false;
-            channel1.sweeperReload = true;
-            channel1.sweeperEnabled = (value & 0x80) ? true : false;
-            channel1.sweeperReloadTime = (value & 0x70) >> 4;
-            break;
-        case 0x0002:
-            channel1.timerPeriod = 0xFF00 | value;
-            break;
-        case 0x0003:
-            channel1.timerPeriod = (channel1.timerPeriod & 0x00FF) | (AUDIO)((value & 0x07) << 8);
-            if(channel1.lengthCounter.enabled) channel1.lengthCounter.length =  LENGTH_COUNTER::LookUpTable[(value & 0xF8) >> 3];
-            channel1.envelope.start = true;
-            channel1.sequencerClock = 0;
-            break;
-        case 0x0004:
-                channel2.envelope.volume = value & 0x0F;
-                channel2.envelope.dividerPeriod = value & 0x0F;
-                channel2.envelope.constantVolume = (value & 0x10) ? true : false;
-                channel2.lengthCounter.halt = (value & 0x20) ? true : false;
-                channel2.envelope.loop = (value & 0x20) ? true : false;
-                channel2.sequencerClock = 0;
-                switch ((value & 0xC0) >> 6)
-                {
-                case 0:
-                    channel2.sequence = 0b01000000;
-                    channel2.dutyCycle = 0.125;
-                    break;
-                case 1:
-                    channel2.sequence = 0b01100000;
-                    channel2.dutyCycle = 0.250;
-                    break;
-                case 2:
-                    channel2.sequence = 0b01111000;
-                    channel2.dutyCycle = 0.500;
-                    break;
-                case 3:
-                    channel2.sequence = 0b10011111;
-                    channel2.dutyCycle = 0.750;
-                    break;
-                }
-                break;
-        case 0x0005:
-            channel2.shiftCount = value & 0x07;
-            channel2.sweeperNegative = (value & 0x08) ? true : false;
-            channel2.sweeperReload = true;
-            channel2.sweeperEnabled = (value & 0x80) ? true : false;
-            channel2.sweeperReloadTime = (value & 0x70) >> 4;
-            break;
-        case 0x0006:
-            channel2.timerPeriod = 0xFF00 | value;
-            break;
-        case 0x0007:
-            channel2.timerPeriod = (channel2.timerPeriod & 0x00FF) | (AUDIO)((value & 0x07) << 8);
-            if(channel2.lengthCounter.enabled) channel2.lengthCounter.length =  LENGTH_COUNTER::LookUpTable[(value & 0xF8) >> 3];
-            channel2.envelope.start = true;
-            channel2.sequencerClock = 0;
-            break;
-        case 0x0008:
-            channel3.counterStart = value & 0x0F;
-            channel3.counterControl = (value & 0x80) ? true : false;
-            channel3.lengthCounter.halt = (value & 0x80) ? true : false;
-            break;
-        case 0x000A:
-            channel3.timerPeriod = 0xFF00 | value;
-            break;
-        case 0x000B:
-            channel3.timerPeriod = (channel3.timerPeriod & 0x00FF) | (AUDIO)((value & 0x07) << 8);
-            if(channel3.lengthCounter.enabled) channel3.lengthCounter.length = LENGTH_COUNTER::LookUpTable[(value & 0xF8) >> 3];
-            channel3.counterReload = true;
-            break;
-        case 0x000C:
-            channel4.lengthCounter.halt = (value & 0x10) ? true : false;
-            channel4.envelope.constantVolume = (value & 0x08) ? true : false;
-            channel4.envelope.divider = value & 0x0F;
-            break;
-        case 0x000E:
-            channel4.fastShift = (value & 0x80) ? true : false;
-            channel4.timerPeriod = Noise::timerLookUpTable[value & 0x0F];
-            break;
-        case 0x000F:
-            if(channel4.lengthCounter.enabled) channel4.lengthCounter.length = LENGTH_COUNTER::LookUpTable[(value & 0xF8) >> 3];
-            channel4.envelope.start = true;
-            break;
-        case 0x0015:
-            channel1.enabled = (value & 0x01) ? true : false;
-            channel2.enabled = (value & 0x02) ? true : false;
-            channel3.enabled = (value & 0x04) ? true : false;
-            channel4.enabled = (value & 0x08) ? true : false;
+    case 0x4000:
+        pulse1.envelope.volume = value & 0x0F;
+        pulse1.envelope.constantVolume = (value & 0x10) ? true : false;
+        pulse1.lengthCounter.halt = (value & 0x20) ? true : false;
+        pulse1.envelope.loop = (value & 0x20) ? true : false;
+        pulse1.sequencerMode = (value & 0xC0) >> 6;
+        break;
+    case 0x4001:
+        pulse1.sweeper.enabled = (value & 0x80) ? true : false;
+        pulse1.sweeper.dividerPeriod = (value & 0x70) >> 4;
+        pulse1.sweeper.calculateTargetPeriod();
+        pulse1.sweeper.negative = (value & 0x08) ? true : false;
+        pulse1.sweeper.shiftCount = value & 0x07;
+        pulse1.sweeper.reload = true;
+        break;
+    case 0x4002:
+        pulse1.period = (pulse1.period & 0xFF00) | value;
+        pulse1.timer = pulse1.period;
+        break;
+    case 0x4003:
+        pulse1.lengthCounter.value = LENGTHCOUNTER::lengthTable[(value & 0xF8) >> 3];
+        pulse1.period |= (AUDIO)((value & 0x07)) << 8;
+        pulse1.timer = pulse1.period;
+        pulse1.dutyCycle = 0;
+        pulse1.envelope.start = true;
+        break;   
+    case 0x4004:
+        pulse2.envelope.volume = value & 0x0F;
+        pulse2.envelope.constantVolume = (value & 0x10) ? true : false;
+        pulse2.lengthCounter.halt = (value & 0x20) ? true : false;
+        pulse2.envelope.loop = (value & 0x20) ? true : false;
+        pulse2.sequencerMode = (value & 0xC0) >> 6;
+        break;
+    case 0x4005:
+        pulse2.sweeper.enabled = (value & 0x80) ? true : false;
+        pulse2.sweeper.dividerPeriod = (value & 0x70) >> 4;
+        pulse2.sweeper.calculateTargetPeriod();
+        pulse2.sweeper.negative = (value & 0x08) ? true : false;
+        pulse2.sweeper.shiftCount = value & 0x07;
+        pulse2.sweeper.reload = true;
+        break;
+    case 0x4006:
+        pulse2.period = (pulse2.period & 0xFF00) | value;
+        pulse2.timer = pulse2.period;
+        break;
+    case 0x4007:
+        pulse2.lengthCounter.value = LENGTHCOUNTER::lengthTable[(value & 0xF8) >> 3];
+        pulse2.period |= (AUDIO)((value & 0x07)) << 8;
+        pulse2.timer = pulse2.period;
+        pulse2.dutyCycle = 0;
+        pulse2.envelope.start = true;
+        break; 
+    case 0x4008:
+        triangle.lengthCounter.halt = (value & 0x80) ? true : false;
+        triangle.linearCounterControl = (value & 0x80) ? true : false;
+        triangle.linerCounterReloadValue = value & 0x7F;
+        break;
+    case 0x400A:
+        triangle.period = (triangle.period & 0xFF00) | value;
+        triangle.timer = triangle.period;
+        break;
+    case 0x400B:
+        triangle.lengthCounter.value = LENGTHCOUNTER::lengthTable[(value & 0xF8) >> 3]; 
+        triangle.period |= (AUDIO)((value & 0x07)) << 8;
+        triangle.timer = triangle.period;
+        triangle.linearCounterReload = true;
+        break;
+    case 0x400C:
+        noise.lengthCounter.halt = (value & 0x20) ? true : false;
+        noise.envelope.constantVolume = (value & 0x10) ? true : false;
+        noise.envelope.volume = value & 0x0F;
+        break;
+    case 0x400E:
+        noise.mode = (value & 0x80) ? NoiseWave::NOISEMODE::MODE6 : NoiseWave::NOISEMODE::MODE1;
+        noise.period = NoiseWave::noiseTable[value & 0x0F];
+        break;
+    case 0x400F:
+        noise.lengthCounter.value = LENGTHCOUNTER::lengthTable[(value & 0xF8) >> 3];
+        noise.envelope.start = true;
+        break;
+    case 0x4015:
+        if((value & 0x01) == 0)
+            pulse1.lengthCounter.disable();
+        else
+            pulse1.lengthCounter.enable();
 
-            channel1.lengthCounter.length  = (value & 0x01) ? channel1.lengthCounter.length : 0x00;
-            channel2.lengthCounter.length  = (value & 0x02) ? channel2.lengthCounter.length : 0x00;
-            channel3.lengthCounter.length  = (value & 0x04) ? channel3.lengthCounter.length : 0x00;
-            channel4.lengthCounter.length  = (value & 0x08) ? channel4.lengthCounter.length : 0x00;
-            break;
-        case 0x0017:
-            fiveStepMode = (value & 0x80) ? true : false;
-            if(fiveStepMode)
-                halfTick();
-            break;
-        default:
-            break;
+        if((value & 0x02) == 0)
+            pulse2.lengthCounter.disable();
+        else
+            pulse2.lengthCounter.enable();
+
+        if((value & 0x04) == 0)
+            triangle.lengthCounter.disable();
+        else
+            triangle.lengthCounter.enable();
+
+        if((value & 0x08) == 0)
+            noise.lengthCounter.disable();
+        else
+            noise.lengthCounter.enable();
+        
+        break;
+    case 0x4017:
+        frameCounterMode = (value & 0x80) ? FRAMECOUNTERMODE::MODE5 : FRAMECOUNTERMODE::MODE4;
+        incomingFrameCounterReset = true;
+        countToFrameCounterReset = 3 + ((clock % 6) ? 1 : 0);
+        if(frameCounterMode == FRAMECOUNTERMODE::MODE5)
+            halfTick();
+        break;
+    default:
+        break;
     }
+}
+
+
+float APU::output()
+{
+    float output = pulseTable[pulse1.output() + pulse2.output()] + tndTable[3 * triangle.output() + 2 * noise.output()];
+    // std::cout << "pulse 1 " << pulse1.output() << std::endl;
+    // std::cout << "pulse 2 " << pulse2.output() << std::endl;
+    // std::cout << "triangle " << triangle.output() << std::endl;
+    // std::cout << "noise " << noise.output() << std::endl;
+    // if(pulse1.output() != 0 || pulse2.output() != 0)
+    // {
+    //     auto a = pulse1.output();
+    //     auto b = pulse2.output();
+    //     std::cout << "not that " << std::endl;
+    // }
+    output = high1.filter(output);
+    output = high2.filter(output);
+    output = low.filter(output);
+    return output;
 }

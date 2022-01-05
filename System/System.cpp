@@ -148,11 +148,10 @@ void NES::tick()
 {
     ppu.tick();
 
-    apu.tick();
-
 
     if(clock % 3 == 0) // PPU of NES is 3x faster than CPU in clock-speed wise,so there happens a CPU tick for every PPU tick (which also means a system tick)
     {
+        apu.tick();
         if(bus.getDMAStatus()) // Check DMA status from main bus before every CPU tick 
             DMA();
         else

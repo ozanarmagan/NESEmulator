@@ -9,7 +9,6 @@ Display::Display(SDL_Event* event,Controller& controller,Audio& audio) : eventPt
     init();
 
     SDL_AudioSpec audiospec;
-    SDL_AudioSpec got;
 
     audiospec.freq     = 44100;
     audiospec.format   = AUDIO_F32SYS;
@@ -110,7 +109,7 @@ void Display::renderFrame()
             }
     }
 
-    SDL_Delay(1000/80);
+    //SDL_Delay(1000/80);
 
 }
 

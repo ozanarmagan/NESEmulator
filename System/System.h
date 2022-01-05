@@ -46,6 +46,6 @@ class NES
         Controller controller;
         Queue<AUDIO> audioQueue;
         double innerClock;
-        inline static double cyclesPerSample = (21.477272 / 4) * 1000000 / 44100;
-        inline static double cyclesPerBuffer = ((21.477272 / 4) * 1000000 / 44100) * 512;
+        inline static double cyclesPerSample = (1789773 / 44100) * 3 ;
+        inline static double cyclesPerBuffer = ((1789773 / 44100) * 3) * 735;
 };

@@ -85,20 +85,19 @@ void APU::writeToMemory(ADDRESS address,BYTE value)
     case 0x4001:
         pulse1.sweeper.enabled = (value & 0x80) ? true : false;
         pulse1.sweeper.dividerPeriod = (value & 0x70) >> 4;
-        pulse1.sweeper.calculateTargetPeriod();
         pulse1.sweeper.negative = (value & 0x08) ? true : false;
         pulse1.sweeper.shiftCount = value & 0x07;
         pulse1.sweeper.reload = true;
         break;
     case 0x4002:
         pulse1.period = (pulse1.period & 0xFF00) | value;
-        pulse1.timer = pulse1.period;
+        pulse1.sweeper.calculateTargetPeriod();
         break;
     case 0x4003:
         pulse1.lengthCounter.value = LENGTHCOUNTER::lengthTable[(value & 0xF8) >> 3];
-        pulse1.period |= (AUDIO)((value & 0x07)) << 8;
-        pulse1.timer = pulse1.period;
-        pulse1.dutyCycle = 0;
+        pulse1.period = (pulse1.period & 0x00FF) | (AUDIOINT)((value & 0x07) << 8);
+        pulse1.sweeper.calculateTargetPeriod();
+        pulse1.sequencer = 0;
         pulse1.envelope.start = true;
         break;   
     case 0x4004:
@@ -111,20 +110,19 @@ void APU::writeToMemory(ADDRESS address,BYTE value)
     case 0x4005:
         pulse2.sweeper.enabled = (value & 0x80) ? true : false;
         pulse2.sweeper.dividerPeriod = (value & 0x70) >> 4;
-        pulse2.sweeper.calculateTargetPeriod();
         pulse2.sweeper.negative = (value & 0x08) ? true : false;
         pulse2.sweeper.shiftCount = value & 0x07;
         pulse2.sweeper.reload = true;
         break;
     case 0x4006:
         pulse2.period = (pulse2.period & 0xFF00) | value;
-        pulse2.timer = pulse2.period;
+        pulse2.sweeper.calculateTargetPeriod();
         break;
     case 0x4007:
         pulse2.lengthCounter.value = LENGTHCOUNTER::lengthTable[(value & 0xF8) >> 3];
-        pulse2.period |= (AUDIO)((value & 0x07)) << 8;
-        pulse2.timer = pulse2.period;
-        pulse2.dutyCycle = 0;
+        pulse2.period = (pulse2.period & 0x00FF) | (AUDIOINT)((value & 0x07) << 8);
+        pulse2.sweeper.calculateTargetPeriod();
+        pulse2.sequencer = 0;
         pulse2.envelope.start = true;
         break; 
     case 0x4008:
@@ -134,12 +132,10 @@ void APU::writeToMemory(ADDRESS address,BYTE value)
         break;
     case 0x400A:
         triangle.period = (triangle.period & 0xFF00) | value;
-        triangle.timer = triangle.period;
         break;
     case 0x400B:
         triangle.lengthCounter.value = LENGTHCOUNTER::lengthTable[(value & 0xF8) >> 3]; 
-        triangle.period |= (AUDIO)((value & 0x07)) << 8;
-        triangle.timer = triangle.period;
+        triangle.period = (triangle.period & 0x00FF) | (AUDIOINT)((value & 0x07) << 8);
         triangle.linearCounterReload = true;
         break;
     case 0x400C:
@@ -157,24 +153,36 @@ void APU::writeToMemory(ADDRESS address,BYTE value)
         break;
     case 0x4015:
         if((value & 0x01) == 0)
-            pulse1.lengthCounter.disable();
+        {
+            pulse1.enabled = false;
+            pulse1.lengthCounter.value = 0;
+        }
         else
-            pulse1.lengthCounter.enable();
+            pulse1.enabled = true;
 
         if((value & 0x02) == 0)
-            pulse2.lengthCounter.disable();
+        {
+            pulse2.enabled = false;
+            pulse2.lengthCounter.value = 0;
+        }
         else
-            pulse2.lengthCounter.enable();
+            pulse2.enabled = true;
 
         if((value & 0x04) == 0)
-            triangle.lengthCounter.disable();
+        {
+            triangle.enabled = false;
+            triangle.lengthCounter.value = 0;
+        }
         else
-            triangle.lengthCounter.enable();
+            triangle.enabled = true;
 
         if((value & 0x08) == 0)
-            noise.lengthCounter.disable();
+        {
+            noise.enabled = false;
+            noise.lengthCounter.value = 0;
+        }
         else
-            noise.lengthCounter.enable();
+            noise.enabled = true;
         
         break;
     case 0x4017:
@@ -192,17 +200,8 @@ void APU::writeToMemory(ADDRESS address,BYTE value)
 
 float APU::output()
 {
-    float output = pulseTable[pulse1.output() + pulse2.output()] + tndTable[3 * triangle.output() + 2 * noise.output()];
-    // std::cout << "pulse 1 " << pulse1.output() << std::endl;
-    // std::cout << "pulse 2 " << pulse2.output() << std::endl;
-    // std::cout << "triangle " << triangle.output() << std::endl;
-    // std::cout << "noise " << noise.output() << std::endl;
-    // if(pulse1.output() != 0 || pulse2.output() != 0)
-    // {
-    //     auto a = pulse1.output();
-    //     auto b = pulse2.output();
-    //     std::cout << "not that " << std::endl;
-    // }
+    float output = pulseTable[pulse1.output() + pulse2.output()]  + tndTable[3 * triangle.output() + 2 * noise.output()];
+
     output = high1.filter(output);
     output = high2.filter(output);
     output = low.filter(output);

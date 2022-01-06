@@ -76,8 +76,9 @@ void PPU::setSpritesForNextRow()
         {
             if(nextRowSprites.getSize() < 8)
             {
-                // If we are going to render sprites next row that means 0th sprite might be rendered so set that flag
-                spriteZeroIndicator = true;
+                // If we are going to render 0th sprite next row that means sprite 0 might render
+                if(i == 0)
+                    spriteZeroIndicator = true;
                 nextRowSprites.add(ppuBus->OAM[i]);
             }
             

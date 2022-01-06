@@ -44,8 +44,8 @@ class NES
         uint64_t clock = 0;
         SDL_Event events;
         Controller controller;
-        Queue<AUDIO> audioQueue;
-        double innerClock;
-        inline static double cyclesPerSample = (1789773 / 44100) * 3 ;
-        inline static double cyclesPerBuffer = ((1789773 / 44100) * 3) * 735;
+        //Queue<AUDIO> audioQueue;
+        double innerClock = 0,outerClock = 0;
+        inline static double cyclesPerSample = 121.53;
+        inline static double cyclesPerBuffer = 121.53 * 735;
 };

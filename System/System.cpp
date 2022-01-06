@@ -125,7 +125,7 @@ void NES::mainLoop()
         //     tick();
         // while(!ppu.isFrameDone());
         innerClock = 0;
-        for(int i = 0;i < cyclesPerBuffer;i++)
+        while(SDL_GetQueuedAudioSize(1) < 8192)
         {
             tick();
             if(innerClock++ >= cyclesPerSample)
@@ -149,7 +149,7 @@ void NES::tick()
     ppu.tick();
 
 
-    if(clock % 3 == 0) // PPU of NES is 3x faster than CPU in clock-speed wise,so there happens a CPU tick for every PPU tick (which also means a system tick)
+    if(clock % 3 == 0) // PPU of NES is 3x faster than CPU in clock-speed wise,so there happens a CPU tick for every 3x PPU tick (which also means a system tick)
     {
         apu.tick();
         if(bus.getDMAStatus()) // Check DMA status from main bus before every CPU tick 

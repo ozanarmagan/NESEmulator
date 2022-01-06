@@ -28,7 +28,7 @@ using std::string;
 
 typedef uint8_t BYTE;
 typedef uint16_t ADDRESS;
-typedef uint16_t AUDIO;
+typedef uint16_t AUDIOINT;
 typedef uint32_t PIXEL;
 typedef uint32_t ADDRESS32;
 typedef uint64_t TIMER;

@@ -24,7 +24,7 @@ class APU
         TIMER clock;
         FLAG incomingFrameCounterReset;
         BYTE countToFrameCounterReset;
-        AUDIO frameCounter = 0;
+        AUDIOINT frameCounter = 0;
         enum class FRAMECOUNTERMODE { MODE4,MODE5} frameCounterMode;
         HighPassFilter high1;
         HighPassFilter high2;

@@ -27,7 +27,7 @@ BYTE Bus::readFromMemory(ADDRESS address)
         controllerMemory[address] <<= 1;
         return data;
     }
-    else if(address >= 0x6000 && address <= 0xFFFF)
+    else if(address >= 0x4800 && address <= 0xFFFF)
         return mapper->MapReadCpu(address);
     else
         return 0;
@@ -49,7 +49,7 @@ void Bus::writeToMemory(ADDRESS address,BYTE value)
     }
     else if(address >= 0x4016 && address <= 0x4017)
         controllerMemory[address & 0x0001] = controllerCache[address & 0x0001];
-    else if(address >= 0x6000 && address <= 0xFFFF)
+    else if(address >= 0x4800 && address <= 0xFFFF)
         mapper->MapWriteCpu(address,value);
 }
 

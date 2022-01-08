@@ -1067,6 +1067,7 @@ CPU::OPEXEC CPU::RTS(ADDRESS source)
 
 	programCounter |= (ADDRESS)(high) << 8;
 	programCounter++;
+	
 };
 
 CPU::OPEXEC CPU::SBC(ADDRESS source)

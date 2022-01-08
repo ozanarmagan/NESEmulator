@@ -13,7 +13,7 @@ BYTE Mapper0::MapReadCpu(ADDRESS address)
 
 void Mapper0::MapWriteCpu(ADDRESS address,BYTE value)
 {
-    cartridge->setPRGData(address - (cartridge->getPRGNum() > 1 ? 0x8000 : 0xC000),value);
+    
 }
 
 

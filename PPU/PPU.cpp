@@ -376,13 +376,13 @@ void PPU::tick()
     if(row < 240 && col < 257 && row > -1 && col > 0)
         display->setPixel(col, row, ppuBus->colors[ ppuBus->readFromMemory(0x3F00 + (palette << 2) + pixel) & 0x3F]);
     
-    if(++col >= 341) // Increment TİCK
+    if(++col >= 341) 
     {
         col = 0;
         if(++row >= 261)
         {
             row = -1;
-            frameDone = true;
+            display->frameDone();
             odd = !odd;
         }
     }

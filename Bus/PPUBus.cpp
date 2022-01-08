@@ -185,7 +185,7 @@ BYTE PPUBus::readFromMemory_mainBus(ADDRESS address)
 	}
 	else if(address == 0x0001)
 	{	
-		//return OAM_offset;
+		return OAM_offset;
 	}
 	else if(address == 0x0002)
 	{	

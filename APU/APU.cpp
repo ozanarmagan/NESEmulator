@@ -5,9 +5,9 @@
 APU::APU() : high1(90),high2(440),low(14000)
 {
     for(int i = 0;i < 31;i++)
-        pulseTable[i] =  95.52 / (8128.0 / i + 100);
+        pulseTable[i] =  95.52 / (8128.0 / (float)i + 100);
     for(int i = 0;i < 203;i++)
-        tndTable[i]   =  163.67 / (24329.0 / i + 100);
+        tndTable[i]   =  163.67 / (24329.0 / (float)i + 100);
 }
 
 
@@ -38,10 +38,12 @@ void APU::tick()
     pulse2.sweeper.calculateTargetPeriod();
     if(incomingFrameCounterReset)
     {
-        if(countToFrameCounterReset == 0)
+        if(--countToFrameCounterReset == 0)
         {
             incomingFrameCounterReset = false;
             frameCounter = 0;
+            if(frameCounterMode == FRAMECOUNTERMODE::MODE5)
+                halfTick();
         }
         else
             countToFrameCounterReset--;
@@ -52,7 +54,7 @@ void APU::tick()
     if(clock % 2 == 0) // APU clocks in every-other-CPU-cycle
     {
 
-        frameCounter++;
+        
 
         if(frameCounter == 3729 || frameCounter == 11186)
             quarterTick();
@@ -60,7 +62,9 @@ void APU::tick()
             halfTick();
         if((frameCounterMode == FRAMECOUNTERMODE::MODE5 && frameCounter == 18641) || (frameCounterMode == FRAMECOUNTERMODE::MODE4 && frameCounter == 14915))
             frameCounter = 0;
-        
+        else
+            frameCounter++;  
+
         pulse1.tick();
         pulse2.tick();
         noise.tick();
@@ -90,12 +94,13 @@ void APU::writeToMemory(ADDRESS address,BYTE value)
         pulse1.sweeper.reload = true;
         break;
     case 0x4002:
-        pulse1.period = (pulse1.period & 0xFF00) | value;
+        pulse1.period = (pulse1.period & 0xFF00) | (AUDIOINT)value;
         pulse1.sweeper.calculateTargetPeriod();
         break;
     case 0x4003:
-        pulse1.lengthCounter.value = LENGTHCOUNTER::lengthTable[(value & 0xF8) >> 3];
-        pulse1.period = (pulse1.period & 0x00FF) | (AUDIOINT)((value & 0x07) << 8);
+        if(pulse1.enabled)
+            pulse1.lengthCounter.value = LENGTHCOUNTER::lengthTable[(value & 0xF8) >> 3];
+        pulse1.period = (pulse1.period & 0x00FF) | ((AUDIOINT)((value & 0x07)) << 8);
         pulse1.sweeper.calculateTargetPeriod();
         pulse1.sequencer = 0;
         pulse1.envelope.start = true;
@@ -115,12 +120,13 @@ void APU::writeToMemory(ADDRESS address,BYTE value)
         pulse2.sweeper.reload = true;
         break;
     case 0x4006:
-        pulse2.period = (pulse2.period & 0xFF00) | value;
+        pulse2.period = (pulse2.period & 0xFF00) | (AUDIOINT)value;
         pulse2.sweeper.calculateTargetPeriod();
         break;
     case 0x4007:
-        pulse2.lengthCounter.value = LENGTHCOUNTER::lengthTable[(value & 0xF8) >> 3];
-        pulse2.period = (pulse2.period & 0x00FF) | (AUDIOINT)((value & 0x07) << 8);
+        if(pulse2.enabled)
+            pulse2.lengthCounter.value = LENGTHCOUNTER::lengthTable[(value & 0xF8) >> 3];
+        pulse2.period = (pulse2.period & 0x00FF) | ((AUDIOINT)((value & 0x07)) << 8);
         pulse2.sweeper.calculateTargetPeriod();
         pulse2.sequencer = 0;
         pulse2.envelope.start = true;
@@ -131,15 +137,17 @@ void APU::writeToMemory(ADDRESS address,BYTE value)
         triangle.linerCounterReloadValue = value & 0x7F;
         break;
     case 0x400A:
-        triangle.period = (triangle.period & 0xFF00) | value;
+        triangle.period = (triangle.period & 0xFF00) | (AUDIOINT)value;
         break;
     case 0x400B:
-        triangle.lengthCounter.value = LENGTHCOUNTER::lengthTable[(value & 0xF8) >> 3]; 
-        triangle.period = (triangle.period & 0x00FF) | (AUDIOINT)((value & 0x07) << 8);
+        if(triangle.enabled)
+            triangle.lengthCounter.value = LENGTHCOUNTER::lengthTable[(value & 0xF8) >> 3]; 
+        triangle.period = (triangle.period & 0x00FF) | ((AUDIOINT)((value & 0x07)) << 8);
         triangle.linearCounterReload = true;
         break;
     case 0x400C:
         noise.lengthCounter.halt = (value & 0x20) ? true : false;
+        noise.envelope.loop = (value & 0x20) ? true : false;
         noise.envelope.constantVolume = (value & 0x10) ? true : false;
         noise.envelope.volume = value & 0x0F;
         break;
@@ -148,7 +156,8 @@ void APU::writeToMemory(ADDRESS address,BYTE value)
         noise.period = NoiseWave::noiseTable[value & 0x0F];
         break;
     case 0x400F:
-        noise.lengthCounter.value = LENGTHCOUNTER::lengthTable[(value & 0xF8) >> 3];
+        if(noise.enabled)
+            noise.lengthCounter.value = LENGTHCOUNTER::lengthTable[(value & 0xF8) >> 3];
         noise.envelope.start = true;
         break;
     case 0x4015:
@@ -188,9 +197,7 @@ void APU::writeToMemory(ADDRESS address,BYTE value)
     case 0x4017:
         frameCounterMode = (value & 0x80) ? FRAMECOUNTERMODE::MODE5 : FRAMECOUNTERMODE::MODE4;
         incomingFrameCounterReset = true;
-        countToFrameCounterReset = 3 + ((clock % 6) ? 1 : 0);
-        if(frameCounterMode == FRAMECOUNTERMODE::MODE5)
-            halfTick();
+        countToFrameCounterReset = 3 + ((clock % 2) ? 1 : 0);
         break;
     default:
         break;
@@ -200,7 +207,7 @@ void APU::writeToMemory(ADDRESS address,BYTE value)
 
 float APU::output()
 {
-    float output = pulseTable[pulse1.output() + pulse2.output()]  + tndTable[3 * triangle.output() + 2 * noise.output()];
+    float output = pulseTable[pulse1.output() + pulse2.output()] + tndTable[3 * triangle.output() + 2 * noise.output()];
 
     output = high1.filter(output);
     output = high2.filter(output);

@@ -38,7 +38,6 @@ void NES::insertNESFile(std::string fileName)
         file.read((char*)&header.unused,5);
         if(header.mapper1 & 0x04)
         file.seekg(512,std::ios_base::cur);
-        std::cout << "MAGIC CHARS: " << header.name << std::endl;
         BYTE mapperID = ((header.mapper2 >> 4) << 4) | (header.mapper1 >> 4);
         bool isNES2 = (header.mapper2 & 0x0C) == 0x08;
         if(!isNES2)
@@ -124,15 +123,15 @@ void NES::mainLoop()
         // do
         //     tick();
         // while(!ppu.isFrameDone());
-        innerClock = 0;
-        while(SDL_GetQueuedAudioSize(1) < 8192)
+        while(SDL_GetQueuedAudioSize(1) < SAMPLE_PER_FRAME)
         {
             tick();
-            if(innerClock++ >= cyclesPerSample)
+            if(innerClock >= cyclesPerSample)
             {
                 audio.addToQueue(apu.output());
                 innerClock -= cyclesPerSample;
             }
+            innerClock += 1.0;
         }
         display.renderFrame();
 #ifdef DEBUG

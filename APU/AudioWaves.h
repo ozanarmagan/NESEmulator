@@ -54,7 +54,7 @@ struct SWEEPER
     FLAG reload;
     FLAG silenceChannel;
     BYTE dividerPeriod;
-    BYTE targetPeriod;
+    AUDIOINT targetPeriod;
     BYTE shiftCount;
     BYTE divider;
     AUDIOINT& period;
@@ -72,16 +72,16 @@ struct SWEEPER
 
         targetPeriod = period + change;
 
-        silenceChannel = (period < 8 || targetPeriod > 0x07FF) ? true : false;
+        silenceChannel = (period < 8 || targetPeriod > 0x7FF) ? true : false;
     }
 
     void tick()
     {
-        
-        if(divider == 0 && enabled && !silenceChannel)
+        calculateTargetPeriod();
+        if(divider == 0 && enabled && !silenceChannel && shiftCount != 0)
         {
             period = targetPeriod;
-            calculateTargetPeriod();
+            
         }
         if(divider == 0 || reload)
         {
@@ -101,7 +101,7 @@ struct LENGTHCOUNTER
     BYTE value;
     
 
-    static constexpr BYTE lengthTable[32] = {10,254, 20,  2, 40,  4, 80,  6, 160,  8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30};
+    static constexpr BYTE lengthTable[32] = {10, 254, 20,  2, 40,  4, 80,  6, 160,  8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30};
     void disable()
     {
         enabled = false;
@@ -160,7 +160,8 @@ struct PulseWave
 
     AUDIOINT output()
     {
-        if(dutySequenceTable[sequencerMode][sequencer] == 0 || sweeper.silenceChannel || lengthCounter.value == 0 || timer < 8 || enabled == false)
+        sweeper.calculateTargetPeriod();
+        if(dutySequenceTable[sequencerMode][sequencer] == 0 || sweeper.silenceChannel || lengthCounter.value == 0 || enabled == false)
             return 0x00;
         else
             return envelope.output();
@@ -219,9 +220,9 @@ struct TriangleWave
 
     AUDIOINT output()
     {
-        if(linearCounter == 0 || lengthCounter.value == 0 || enabled == false)
-            return 0x00;
-        else
+        // if(linearCounter == 0 || lengthCounter.value == 0 || enabled == false)
+        //     return 0x00;
+        // else
             return sequenceTable[sequencerIndex];
     }
 };
@@ -257,19 +258,17 @@ struct NoiseWave
 
     void shifterTick()
     {
-        BYTE feedBack = CHECK_BIT(shifter,0) ^ ((mode == NOISEMODE::MODE6) ? CHECK_BIT(shifter,6) : CHECK_BIT(shifter,1));
+        BYTE feedBack = (shifter & 0x1) ^ (shifter >> ((mode == NOISEMODE::MODE6) ? 6 : 1) & 0x1);
 
         shifter >>= 1;
 
         if(feedBack)
-            SET_BIT(shifter,14);
-        else
-            CLEAR_BIT(shifter,14);
+            shifter |= feedBack << 14;
     }
 
     AUDIOINT output()
     {
-        if((shifter & 0x0001) || lengthCounter.value == 0 || enabled == false)
+        if(!(shifter & 0x0001) || lengthCounter.value == 0 || enabled == false)
             return 0x00;
         else
             return envelope.output();

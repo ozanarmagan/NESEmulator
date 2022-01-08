@@ -29,7 +29,7 @@ class LowPassFilter : FilterBase
 {
     public:
         LowPassFilter(HERTZ freq) : FilterBase(freq) { a = dT / (dT + RC); };
-        virtual double filter(double input) final { prevY = a*input + (1 - a) * prevY; prevX = input; return prevY; };
+        virtual double filter(double input) final { prevY = prevY + a * (input - prevX); prevX = input; return prevY; };
     private:
         double a;
         double prevX = 0;
@@ -53,7 +53,7 @@ class HighPassFilter : FilterBase
 {
     public:
         HighPassFilter(HERTZ freq) : FilterBase(freq) { a = RC / (dT + RC); };
-        virtual double filter(double input) final { prevY = a*prevY + a * (input - prevX); prevX = input; return prevY; };
+        virtual double filter(double input) final { prevY = a * (prevY + input - prevX); prevX = input; return prevY; };
     private:
         double a;
         double prevX = 0;

@@ -2,7 +2,6 @@
 #define AUDIO_H
 
 #include <stdio.h>
-#include <fstream>
 #include <SDL2/SDL_audio.h>
 
 #include "../Utils/handler.h"

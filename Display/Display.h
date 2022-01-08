@@ -14,16 +14,19 @@ class Display
 {
     public:
         Display(SDL_Event* event,Controller& controller,Audio& audio);
+        ~Display() { SDL_DestroyTexture(texture); SDL_DestroyWindow(window); SDL_DestroyRenderer(renderer); };
         void init();
         void initDebug();
         void setPixel(int x, int y, PIXEL_RGB pixelColors);
+        void frameDone();
         void renderFrame();
 #ifdef DEBUG
         void renderDebugFrame();
         void setPixelDebug(int x, int y, PIXEL_RGB colors);
 #endif
     private:
-        PIXEL pixels[RENDER_WIDTH * RENDER_HEIGHT];
+        PIXEL currentFrame[RENDER_WIDTH * RENDER_HEIGHT];
+        PIXEL nextFrame[RENDER_WIDTH * RENDER_HEIGHT];
 #ifdef DEBUG
         PIXEL debug[DEBUG_WIDTH * DEBUG_HEIGHT];
 #endif
@@ -37,6 +40,7 @@ class Display
         Controller& controller;
         Audio& audio;
         TIMER interval0 = 0,interval1 = 0;
+        int pitch = RENDER_WIDTH * sizeof(PIXEL);
 };
 
 #endif

@@ -70,17 +70,20 @@ void Display::setPixel(int x, int y,PIXEL_RGB pixelColors)
     pixel |= (PIXEL)pixelColors.g << 8;
     pixel |= (PIXEL)pixelColors.b << 0;
 
-    pixels[x + y * RENDER_WIDTH - 1] = pixel;
+    nextFrame[x + y * RENDER_WIDTH - 1] = pixel;
 }
 
 void Display::renderFrame()
 {
-    SDL_UpdateTexture(texture, NULL, pixels, RENDER_WIDTH * sizeof(PIXEL));
+    SDL_UpdateTexture(texture, NULL, currentFrame, RENDER_WIDTH * sizeof(PIXEL));
+    SDL_RenderClear(renderer);
     SDL_RenderCopy(renderer, texture, NULL, NULL);
     SDL_RenderPresent(renderer);
 
+    //SDL_DestroyTexture(texture);
+
     interval1 = interval0;
-    interval0 = SDL_GetTicks64();
+    interval0 = SDL_GetTicks();
 
     SDL_SetWindowTitle(window,(string("NES Emulator FPS: " + std::to_string(1000.0 / (interval0 - interval1)))).c_str());
 
@@ -110,6 +113,12 @@ void Display::renderFrame()
     }
 
 
+}
+
+void Display::frameDone()
+{
+    for(int i = 0;i < RENDER_WIDTH * RENDER_HEIGHT;i++)
+        currentFrame[i] = nextFrame[i];
 }
 
 

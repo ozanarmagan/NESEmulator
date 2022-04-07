@@ -19,6 +19,7 @@ class APU
         PulseWave pulse2 = PulseWave(0);
         TriangleWave triangle;
         NoiseWave noise;
+        DMC dmc;
         float pulseTable[31];
         float tndTable[203];
         TIMER clock;

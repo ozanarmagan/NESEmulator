@@ -68,6 +68,7 @@ void APU::tick()
         pulse1.tick();
         pulse2.tick();
         noise.tick();
+        dmc.tick();
     }
 
     clock++;
@@ -160,6 +161,20 @@ void APU::writeToMemory(ADDRESS address,BYTE value)
             noise.lengthCounter.value = LENGTHCOUNTER::lengthTable[(value & 0xF8) >> 3];
         noise.envelope.start = true;
         break;
+    case 0x4010:
+        dmc.IRQEnabled = (value & 0x80) ? true : false;
+        dmc.loop = (value & 0x40) ? true : false;
+        dmc.period = DMC::periodTable[(value & 0x0F)];
+        break;
+    case 0x4011:
+        dmc.outputLoad = value & 0x7F;
+        break;
+    case 0x4012:
+        dmc.sampleAddress = 0xC000 + ((AUDIOINT)(value) * 64);
+        break;
+    case 0x4013:
+        dmc.sampleLength = (AUDIOINT)(value) * 16;
+        break;
     case 0x4015:
         if((value & 0x01) == 0)
         {
@@ -192,7 +207,23 @@ void APU::writeToMemory(ADDRESS address,BYTE value)
         }
         else
             noise.enabled = true;
+
+        if((value & 0x10) == 0)
+        {
+            dmc.enabled = false;
+            dmc.bytesRemaining = 0;
+        }
+        else
+        {
+            dmc.enabled = true;
+            if(dmc.bytesRemaining == 0)
+            {
+                dmc.currentAddresss = dmc.sampleAddress;
+                dmc.bytesRemaining = dmc.sampleLength;
+            }
+        }
         
+        dmc.IRQ = false;
         break;
     case 0x4017:
         frameCounterMode = (value & 0x80) ? FRAMECOUNTERMODE::MODE5 : FRAMECOUNTERMODE::MODE4;

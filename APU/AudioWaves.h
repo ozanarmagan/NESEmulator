@@ -275,5 +275,41 @@ struct NoiseWave
     }
 };
 
+struct DMC
+{
+    FLAG enabled;
+    FLAG IRQEnabled;
+    FLAG IRQ;
+    FLAG loop;
+    FLAG bufferEmpty;
+    FLAG silenceChannel;
+    FLAG stall;
+    ADDRESS sampleAddress;
+    ADDRESS currentAddresss;
+    AUDIOINT period;
+    AUDIOINT timer;
+    AUDIOINT sampleLength;
+    AUDIOINT bytesRemaining;
+    BYTE outputLoad;
+
+    static constexpr AUDIOINT periodTable[] = {428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106, 84, 72, 54};
+
+    void tick()
+    {
+        if(timer == 0)
+        {
+            timer = period - 1;
+        }
+        else
+            timer--;
+    }
+
+    AUDIOINT output()
+    {
+        return outputLoad;
+    }
+    
+};
+
 
 #endif

@@ -594,6 +594,23 @@ void CPU::NMI()
 	cycleRemaining = 8;
 }
 
+void CPU::IRQ()
+{
+	if(STATUS.INTERRUPT == 0)
+	{
+		STATUS.BREAK = 0;
+		STATUS.UNUSED = 1;
+		STATUS.INTERRUPT = 1;
+		push((programCounter >> 8) & 0xFF);
+		push(programCounter & 0xFF);
+		push(STATUS.combined);
+		
+		programCounter = (bus.readFromMemory(IRQVECTOR_H) << 8) | bus.readFromMemory(IRQVECTOR_L);
+
+		cycleRemaining = 7;
+	}
+}
+
 
 
 ADDRESS CPU::IMM()

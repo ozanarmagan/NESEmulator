@@ -4,7 +4,12 @@ LDFLAGS = -O3 -std=c++17
 
 SRC = $(wildcard */*.cpp) *.cpp 
 OBJ = $(SRC:.cc=.o)
-EXEC = test.exe
+
+ifeq ($(OS),Windows_NT) 
+	EXEC = nesemulator.exe
+else
+	EXEC = nesemulator.out
+endif
 
 all: $(EXEC) 
 

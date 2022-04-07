@@ -1,30 +1,27 @@
 #ifndef HANDLER_H
 #define HANDLER_H
 
+#include <iostream>
 
 #define RUN_FOREVER while(1)
 
-#define DISPLAY_WIDTH 1024
-#define DISPLAY_HEIGHT 960
-#define RENDER_WIDTH 256
-#define RENDER_HEIGHT 240
-#define DEBUG_WIDTH 270
-#define DEBUG_HEIGHT 270
+static constexpr int DISPLAY_WIDTH = 1024;
+static constexpr int DISPLAY_HEIGHT = 960;
+static constexpr int RENDER_WIDTH = 256;
+static constexpr int RENDER_HEIGHT = 240;
+static constexpr int DEBUG_WIDTH = 270;
+static constexpr int DEBUG_HEIGHT = 270;
 
 
-#define PI 3.14159265359
+static constexpr double PI = 3.14159265359;
 
 
-#define SAMPLE_PER_FRAME 8192
-
-#define CYCLES_PER_SAMPLE 
-#define CYCLES_PER_BUFFER CYCLES_PER_SAMPLE * 1024
-
+static constexpr int SAMPLE_PER_FRAME =  8192;
 
 #define SET_BIT(byte,bit)   ((byte) |=  (1<<(bit)))
 #define CLEAR_BIT(byte,bit) ((byte) &= ~((1)<<(bit)))
 #define CHECK_BIT(byte,bit) ((byte) &   (1<<(bit)))
-#include <iostream>
+
 
 using std::string;
 

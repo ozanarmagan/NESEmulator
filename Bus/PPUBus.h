@@ -9,6 +9,10 @@
 
 namespace nesemulator
 {
+    /**
+     * Bus of PPU to move and store data for PPU operations and requests from main bus to read and write to PPU memory
+     * 
+     */
     class PPUBus
     {
         public:

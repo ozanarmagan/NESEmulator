@@ -7,6 +7,9 @@
 
 namespace nesemulator
 {
+    /**
+     * Cartridge class to store ROM data
+     */
     class Cartridge 
     {
         public:

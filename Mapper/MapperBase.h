@@ -4,13 +4,13 @@
 #include "../Utils/handler.h"
 #include "../Cartridge/Cartridge.h"
 
-/*
-    This is an abstract base class for implementation of each mapper 
-    All the mappers MUST be derived from this class
-*/
 
 namespace nesemulator
 {
+    /**
+        This is an abstract base class for implementation of each mapper 
+        All the mappers MUST be derived from this class
+    */
     class MapperBase
     {
         public:

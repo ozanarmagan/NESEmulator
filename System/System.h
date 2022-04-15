@@ -20,6 +20,11 @@
 
 namespace nesemulator
 {
+    /**
+     * Wrapper and master class for the emulator
+     * 
+     * Controls main loop of the system
+     */
     class NES
     {
         public:

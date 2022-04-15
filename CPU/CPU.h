@@ -14,7 +14,12 @@
 
 
 
-/*  
+
+
+
+namespace nesemulator
+{
+    /**  
     This is a solid emulation of 6502 Proccessor.
     
     CPU EMULATION TYPE : Jump Table Based
@@ -23,11 +28,7 @@
     and they are forming INSTRUCTION struct for each OPCODE
     Since there is 256 OPCODE but 6502 using only 151 of them,remaining
     OPCODEs are illegal and they literally do nothing (NOP)
-*/
-
-
-namespace nesemulator
-{
+    */
     class CPU
     {
         public:
@@ -44,11 +45,18 @@ namespace nesemulator
             FILE* logFile;
     #endif
 
-            /* REGISTERS */
+            /* ACCUMULATOR REGISTER */
             BYTE A = 0x00;
+            /* INDEX-X REGISTER */
             BYTE X = 0x00;
+            /* INDEX-Y REGISTER */
             BYTE Y = 0x00;
+            /* STACK POINTER */
             BYTE SP = 0xFF;
+            /**
+             * STATUS REGITERS to store FLAGs
+             *
+             */
             union
             {
                 struct
@@ -67,9 +75,13 @@ namespace nesemulator
                 OPEXEC_PTR operation;
                 ADDRESSING_MODE addr;
             };
-
+            /**
+             * Instruction table of register
+             */
             INSTRUCTION table[256];
-
+            /**
+             * Cycle count of each operation in the instruction table 
+             */
             static constexpr BYTE cycleCounts[256] = { // Cycle count for each operation
             7,6,2,8,3,3,5,5,3,2,2,2,4,4,6,6,
             2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
@@ -88,8 +100,6 @@ namespace nesemulator
             2,6,2,8,3,3,5,5,2,2,2,2,4,4,6,6,
             2,5,2,8,4,4,6,6,2,4,2,7,4,4,7,7,
         };
-
-
             static const ADDRESS IRQVECTOR_H = 0xFFFF; // IRQ Vector
             static const ADDRESS IRQVECTOR_L = 0xFFFE;
             static const ADDRESS RSTVECTOR_H = 0xFFFD; // Reset Vector
@@ -99,27 +109,30 @@ namespace nesemulator
 
             ADDRESS programCounter = 0x0000;
 
-            /* CYCLE INDEX */
+            /* Remaining cycles of last executed operation */
             BYTE cycleRemaining = 0;
-
-            BYTE additionalCycle0 = 0,additionalCycle1 = 0; // Some instructions may require extra cycles to complete
+            /* Some operations may take more time... */
+            BYTE additionalCycle0 = 0,additionalCycle1 = 0; 
 
             BYTE currentOpCode;
 
             INSTRUCTION currentInstruction;
 
+            /* Bus object to read and write */
             Bus& bus;
 
+            /* CPU Clock */
             uint64_t clock = 0;
 
             ADDRESS source;
 
             
-            /* For stack operations */
             void push(BYTE value);
 
             BYTE pop();
             /*------------------------OPERATIONS------------------------*/
+
+            
             OPEXEC ADC(ADDRESS source);
 
             OPEXEC AND(ADDRESS source);

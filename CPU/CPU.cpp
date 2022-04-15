@@ -17,6 +17,11 @@ namespace nesemulator
 	}
 
 
+	/**
+	 * Construct a new CPU::CPU object and fill instruction table with related operations and addressing modes
+	 * 
+	 * @param mem Bus object to connect
+	 */
 	CPU::CPU(Bus& mem) : bus(mem) { 
 
 	#ifdef CPUDEBUG
@@ -490,17 +495,31 @@ namespace nesemulator
 	};
 
 
+	/**
+	 * Push value to the stack
+	 * 
+	 * @param value to push
+	 */
 	void CPU::push(BYTE value)
 	{
 		bus.writeToMemory(0x0100 + SP--,value);
 	}
 
+	/**
+	 * Pop value from stack
+	 * 
+	 * @return BYTE to pop
+	 */
 	BYTE CPU::pop()
 	{
 		SP++;
 		return bus.readFromMemory(0x0100 + SP);
 	}
 
+	/**
+	 * Ticks CPU for one cycle if there is no extra cycle remaining for last operation
+	 * Fetch,decode and execute next operation
+	 */
 	void CPU::tick()
 	{
 
@@ -542,6 +561,13 @@ namespace nesemulator
 
 
 
+	/**
+	 * Helper function to print details of CPU
+	 * 
+	 * @param out std::ostream to insert 
+	 * @param cpu CPU object
+	 * @return std::ostream& 
+	 */
 	std::ostream& operator<<(std::ostream &out,CPU &cpu) // For logging 
 	{
 		out << "REGISTERS: " << std::endl;
@@ -552,6 +578,10 @@ namespace nesemulator
 	}
 
 
+	/**
+	 * Function to reset CPU
+	 * 
+	 */
 	void CPU::reset()
 	{
 		programCounter = 0xFFFC;
@@ -581,6 +611,13 @@ namespace nesemulator
 
 
 
+	/**
+	 * Non-Maskable Interrupt
+	 * 
+	 * Set BREAK and INTERRUPT flags 
+	 * Push current PROGRAM COUNTER and STATUS registers to the stack
+	 * Set PROGRAM COUNTER to the value of NMIVECTOR address
+	 */
 	void CPU::NMI()
 	{
 		STATUS.BREAK = 0;
@@ -596,6 +633,14 @@ namespace nesemulator
 		cycleRemaining = 8;
 	}
 
+	/**
+	 * Interrupt Request
+	 * 
+	 * If INTERRUPT flag not set in STATUS register; 
+	 * Set BREAK and INTERRUPT flags 
+	 * Push current PROGRAM COUNTER and STATUS registers to the stack
+	 * Set PROGRAM COUNTER to the value of NMIVECTOR address
+	 */
 	void CPU::IRQ()
 	{
 		if(STATUS.INTERRUPT == 0)
@@ -614,12 +659,23 @@ namespace nesemulator
 	}
 
 
-
+	/**
+	 * Immediate Addressing Mode
+	 * 
+	 * Get address from address pointed by PROGRAM COUNTER directly
+	 * 
+	 */
 	ADDRESS CPU::IMM()
 	{
 		return programCounter++; 
 	}; // IMMEDIATE
 
+	/**
+	 * Absoulte Addressing Mode
+	 * 
+	 * Use value of address pointed by PROGRAM COUNTER to obtain address of next operation
+	 * 
+	 */
 	ADDRESS CPU::ABS()
 	{
 		ADDRESS addrLower = bus.readFromMemory(programCounter++),
@@ -627,15 +683,37 @@ namespace nesemulator
 		return (addrHigher << 8) | addrLower; 
 	};  // ABSOLUTE
 
+	/**
+	 * Zero-Indexed Addressing Mode
+	 * 
+	 * Use value of address pointed by PROGRAM COUNTER as low 8-bits of a CPU zero-page address
+	 */
 	ADDRESS CPU::ZER()
 	{ return bus.readFromMemory(programCounter++) % 256; }; // ZERO PAGE
 
+	/**
+	 * Zero-Indexed X Addressing Mode
+	 * 
+	 * Use value of address pointed by PROGRAM COUNTER plus X register as low 8-bits of a CPU zero-page address
+	 */
 	ADDRESS CPU::ZEX()
 	{ return (bus.readFromMemory(programCounter++) + X) % 256; }; // INDEXED-X ZERO PAGE
 
+	/**
+	 * Zero-Indexed Y Addressing Mode
+	 * 
+	 * Use value of address pointed by PROGRAM COUNTER plus Y register as low 8-bits of a CPU zero-page address
+	 */
 	ADDRESS CPU::ZEY()
 	{ return (bus.readFromMemory(programCounter++) + Y) % 256; }; // INDEXED-Y ZERO PAGE
 
+
+	/**
+	 * Absoule + X Addressing Mode
+	 * 
+	 * 
+	 * Get absolute addressing and sum with X register
+	 */
 	ADDRESS CPU::ABX()
 	{ ADDRESS addrLower = bus.readFromMemory(programCounter++),
 		addrHigher = bus.readFromMemory(programCounter++),absolute;
@@ -644,8 +722,14 @@ namespace nesemulator
 		if((absolute & 0xFF00) != (addrHigher << 8)) 
 			additionalCycle0 = 1; 
 		return absolute; 
-	}; // INDEXED-X ABSOLUTE
+	}; 
 
+	/**
+	 * Absoule + Y Addressing Mode
+	 * 
+	 * 
+	 * Get absolute addressing and sum with Y register
+	 */
 	ADDRESS CPU::ABY()
 	{
 		ADDRESS addrLower = bus.readFromMemory(programCounter++),
@@ -655,11 +739,21 @@ namespace nesemulator
 		if((absolute & 0xFF00) != (addrHigher << 8)) 
 			additionalCycle0 = 1; 
 		return absolute;
-	}; // INDEXED-Y ABSOLUTE
+	}; 
 
+	/**
+	 * Implied Addressing Mode
+	 * 
+	 * No address needed for next operation
+	 */
 	ADDRESS CPU::IMP()
 	{ return 0; }; // IMPLIED
 
+	/**
+	 * Relative Addressing Mode
+	 * 
+	 * Use value stored in address pointed by PROGRAM COUNTER to be offset for current value of PROGRAM COUNTER
+	 */
 	ADDRESS CPU::REL()
 	{ 
 		ADDRESS offset = bus.readFromMemory(programCounter++); 
@@ -667,19 +761,21 @@ namespace nesemulator
 		return programCounter +  offset; 
 	}; // RELATIVE
 
+
+
 	ADDRESS CPU::INX()
 	{ 
 		ADDRESS temp = bus.readFromMemory(programCounter++);
 		ADDRESS lower = bus.readFromMemory((temp + (ADDRESS)X) % 256),higher = bus.readFromMemory((temp + (ADDRESS)X + 1) % 256);
 		return (higher << 8) | lower;
-	}; // INDEXED-X INDIRECT
+	}; 
 
 	ADDRESS CPU::INY()
 	{ 
 		ADDRESS temp = bus.readFromMemory(programCounter++);
 		ADDRESS lower = bus.readFromMemory(temp % 256),higher = bus.readFromMemory((temp + 1) % 256);
 		return ((higher << 8) | lower) + Y; 
-	}; // INDEXED-Y INDIRECT
+	}; 
 
 	ADDRESS CPU::ABI()
 	{

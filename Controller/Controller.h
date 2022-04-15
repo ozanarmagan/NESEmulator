@@ -8,6 +8,10 @@
 
 namespace nesemulator
 {
+    /**
+     * Controller class to store current controller inputs
+     * 
+     */
     class Controller
     {
         public: 

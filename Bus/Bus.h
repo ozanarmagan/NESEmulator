@@ -11,6 +11,13 @@
 
 namespace nesemulator
 {
+    /**
+     * Main bus of the emulator
+     * 
+     * Maps addresses of read and write requests from CPU according to memory map of the console
+     * Operates DMA process for PPU
+     * Stores internal RAM of 2KB
+     */
     class Bus
     {
         public:

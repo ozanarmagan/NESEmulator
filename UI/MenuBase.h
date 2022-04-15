@@ -10,7 +10,7 @@ class MenuBase
     private:
         int currentChoice = 0;
         
-}
+};
 
 
 

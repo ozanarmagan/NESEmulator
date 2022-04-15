@@ -4,15 +4,14 @@
 #include <stdio.h>
 #include <SDL2/SDL_audio.h>
 
-#include "../Utils/handler.h"
-#include "../Utils/Queue.h"
 
-class Audio
+namespace nesemulator
 {
-    public:
-        void addToQueue(float sample);
-    private:
-};
+    namespace Audio
+    {
+        inline void addToQueue(float sample) { SDL_QueueAudio(1,&sample,sizeof(float));    };
+    }
+}
 
 
 

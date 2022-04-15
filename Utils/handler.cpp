@@ -1,6 +1,8 @@
 #include "handler.h"
 
-void reverseByte(BYTE* byte)
+namespace nesemulator
+{
+    void reverseByte(BYTE* byte)
 {
     BYTE temp = 0x00;
     if(*byte & 0x01) temp |= 0x80;
@@ -14,4 +16,5 @@ void reverseByte(BYTE* byte)
 
     *byte = temp;
 
+}
 }

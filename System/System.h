@@ -18,32 +18,34 @@
 #include "../Audio/Audio.h"
 #include "../Utils/Queue.h"
 
-class NES
+namespace nesemulator
 {
-    public:
-        NES();
-        NES(std::string fileName);
-        void insertNESFile(std::string fileName);
-        void start();
-        void reset();
-        void log();
-    private:
-        Cartridge cartridge;
-        std::shared_ptr<MapperBase> mapper;
-        PPUBus ppuBus;
-        Bus bus;
-        PPU ppu;
-        APU apu;
-        CPU cpu;    
-        Audio audio;
-        Display display;
-        void setMapper();
-        void mainLoop();
-        void tick();
-        void DMA();
-        uint64_t clock = 0;
-        SDL_Event events;
-        Controller controller;
-        double innerClock = 0;
-        inline static double cyclesPerSample = 121.53;
-};
+    class NES
+    {
+        public:
+            NES();
+            NES(std::string fileName);
+            void insertNESFile(std::string fileName);
+            void start();
+            void reset();
+            void log();
+        private:
+            Cartridge cartridge;
+            std::shared_ptr<MapperBase> mapper;
+            PPUBus ppuBus;
+            Bus bus;
+            PPU ppu;
+            APU apu;
+            CPU cpu;    
+            Display display;
+            void setMapper();
+            void mainLoop();
+            void tick();
+            void DMA();
+            uint64_t clock = 0;
+            SDL_Event events;
+            Controller controller;
+            double innerClock = 0;
+            inline static double cyclesPerSample = 121.53;
+    };
+}

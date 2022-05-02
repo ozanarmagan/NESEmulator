@@ -17,6 +17,7 @@
 #include "../Controller/Controller.h"
 #include "../Audio/Audio.h"
 #include "../Utils/Queue.h"
+#include "../State/State.h"
 
 namespace nesemulator
 {
@@ -52,5 +53,9 @@ namespace nesemulator
             Controller controller;
             double innerClock = 0;
             inline static double cyclesPerSample = 121.53;
+            State states[STATE_COUNT];
+            void loadState(int index);
+            void saveCurrentState();
+            
     };
 }

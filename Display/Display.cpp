@@ -87,7 +87,7 @@ namespace nesemulator
         interval1 = interval0;
         interval0 = SDL_GetTicks();
 
-        SDL_SetWindowTitle(window,(string("NES Emulator FPS: " + std::to_string(1000.0 / (interval0 - interval1)))).c_str());
+        SDL_SetWindowTitle(window,(std::string("NES Emulator FPS: " + std::to_string(1000.0 / (interval0 - interval1)))).c_str());
 
         while(SDL_PollEvent(eventPtr))
         {

@@ -791,7 +791,7 @@ namespace nesemulator
 
 
 
-	CPU::OPEXEC CPU::ADC(ADDRESS source)
+	OPEXEC CPU::ADC(ADDRESS source)
 	{
 		BYTE data = bus.readFromMemory(source);
 		ADDRESS temp = (ADDRESS) data + (ADDRESS) A + (ADDRESS)(STATUS.CARRY ? 1 : 0);
@@ -807,7 +807,7 @@ namespace nesemulator
 		additionalCycle1++;
 	};
 
-	CPU::OPEXEC CPU::AND(ADDRESS source)
+	OPEXEC CPU::AND(ADDRESS source)
 	{
 		A = A & bus.readFromMemory(source);
 		STATUS.ZERO = (A == 0) ? 1 : 0;
@@ -815,7 +815,7 @@ namespace nesemulator
 		additionalCycle1++;
 	};
 
-	CPU::OPEXEC CPU::ASL(ADDRESS source)
+	OPEXEC CPU::ASL(ADDRESS source)
 	{
 		ADDRESS data = (ADDRESS)((currentInstruction.addr == &CPU::IMP) ?  A : bus.readFromMemory(source));
 		data <<= 1;
@@ -829,7 +829,7 @@ namespace nesemulator
 	};
 
 
-	CPU::OPEXEC CPU::BCC(ADDRESS source)
+	OPEXEC CPU::BCC(ADDRESS source)
 	{
 		if(!STATUS.CARRY)
 	{
@@ -840,7 +840,7 @@ namespace nesemulator
 		}
 	};
 
-	CPU::OPEXEC CPU::BCS(ADDRESS source)
+	OPEXEC CPU::BCS(ADDRESS source)
 	{
 		if(STATUS.CARRY)
 	{
@@ -851,7 +851,7 @@ namespace nesemulator
 		}
 	};
 
-	CPU::OPEXEC CPU::BEQ(ADDRESS source)
+	OPEXEC CPU::BEQ(ADDRESS source)
 	{
 		if(STATUS.ZERO)
 	{
@@ -862,7 +862,7 @@ namespace nesemulator
 		}
 	};
 
-	CPU::OPEXEC CPU::BIT(ADDRESS source)
+	OPEXEC CPU::BIT(ADDRESS source)
 	{
 		ADDRESS data = bus.readFromMemory(source);
 		STATUS.ZERO = ((ADDRESS)(A & data) & 0x00FF) == 0x00 ? 1 : 0; 
@@ -870,7 +870,7 @@ namespace nesemulator
 		STATUS.OVERFLOW = (data & (1 << 6)) ? 1 : 0;
 	};
 
-	CPU::OPEXEC CPU::BMI(ADDRESS source)
+	OPEXEC CPU::BMI(ADDRESS source)
 	{
 		if(STATUS.NEGATIVE)
 	{
@@ -881,7 +881,7 @@ namespace nesemulator
 		}
 	};
 
-	CPU::OPEXEC CPU::BNE(ADDRESS source)
+	OPEXEC CPU::BNE(ADDRESS source)
 	{
 		if(!STATUS.ZERO)
 	{
@@ -892,7 +892,7 @@ namespace nesemulator
 		}
 	};
 
-	CPU::OPEXEC CPU::BPL(ADDRESS source)
+	OPEXEC CPU::BPL(ADDRESS source)
 	{
 		if(!STATUS.NEGATIVE)
 	{
@@ -903,7 +903,7 @@ namespace nesemulator
 		}
 	};
 
-	CPU::OPEXEC CPU::BRK(ADDRESS source)
+	OPEXEC CPU::BRK(ADDRESS source)
 	{
 		STATUS.BREAK = 1;
 		STATUS.INTERRUPT = 1;
@@ -915,7 +915,7 @@ namespace nesemulator
 		programCounter = bus.readFromMemory(IRQVECTOR_L) | (bus.readFromMemory(IRQVECTOR_H) << 8);
 	};
 
-	CPU::OPEXEC CPU::BVC(ADDRESS source)
+	OPEXEC CPU::BVC(ADDRESS source)
 	{
 		if(!STATUS.OVERFLOW)
 	{
@@ -926,7 +926,7 @@ namespace nesemulator
 		}
 	};
 
-	CPU::OPEXEC CPU::BVS(ADDRESS source)
+	OPEXEC CPU::BVS(ADDRESS source)
 	{
 		if(STATUS.OVERFLOW)
 	{
@@ -937,27 +937,27 @@ namespace nesemulator
 		}
 	};
 
-	CPU::OPEXEC CPU::CLC(ADDRESS source)
+	OPEXEC CPU::CLC(ADDRESS source)
 	{
 		STATUS.CARRY = 0;
 	};
 
-	CPU::OPEXEC CPU::CLD(ADDRESS source)
+	OPEXEC CPU::CLD(ADDRESS source)
 	{
 		STATUS.DECIMAL = 0;
 	};
 
-	CPU::OPEXEC CPU::CLI(ADDRESS source)
+	OPEXEC CPU::CLI(ADDRESS source)
 	{
 		STATUS.INTERRUPT = 0;
 	};
 
-	CPU::OPEXEC CPU::CLV(ADDRESS source)
+	OPEXEC CPU::CLV(ADDRESS source)
 	{
 		STATUS.OVERFLOW = 0;
 	};
 
-	CPU::OPEXEC CPU::CMP(ADDRESS source)
+	OPEXEC CPU::CMP(ADDRESS source)
 	{
 		BYTE data = bus.readFromMemory(source);
 		ADDRESS temp = (ADDRESS)A - (ADDRESS)data;
@@ -967,7 +967,7 @@ namespace nesemulator
 		additionalCycle1++;
 	};
 
-	CPU::OPEXEC CPU::CPX(ADDRESS source)
+	OPEXEC CPU::CPX(ADDRESS source)
 	{
 		BYTE data = bus.readFromMemory(source);
 		ADDRESS temp = (ADDRESS)X - (ADDRESS)data;
@@ -977,7 +977,7 @@ namespace nesemulator
 		additionalCycle1++;
 	};
 
-	CPU::OPEXEC CPU::CPY(ADDRESS source)
+	OPEXEC CPU::CPY(ADDRESS source)
 	{
 		BYTE data = bus.readFromMemory(source);
 		ADDRESS temp = (ADDRESS)Y - (ADDRESS)data;
@@ -987,7 +987,7 @@ namespace nesemulator
 		additionalCycle1++;
 	};
 
-	CPU::OPEXEC CPU::DEC(ADDRESS source)
+	OPEXEC CPU::DEC(ADDRESS source)
 	{
 		BYTE data = bus.readFromMemory(source);
 		ADDRESS temp = (ADDRESS) data - 1;
@@ -996,7 +996,7 @@ namespace nesemulator
 		bus.writeToMemory(source,temp & 0x00FF);
 	};
 
-	CPU::OPEXEC CPU::DEX(ADDRESS source)
+	OPEXEC CPU::DEX(ADDRESS source)
 	{
 		BYTE data = X - 1;
 		STATUS.NEGATIVE = (data & 0x80) ? 1 : 0;
@@ -1004,7 +1004,7 @@ namespace nesemulator
 		X = data;
 	};
 
-	CPU::OPEXEC CPU::DEY(ADDRESS source)
+	OPEXEC CPU::DEY(ADDRESS source)
 	{
 		BYTE data = Y - 1;
 		STATUS.NEGATIVE = (data & 0x80) ? 1 : 0;
@@ -1012,7 +1012,7 @@ namespace nesemulator
 		Y = data;
 	};
 
-	CPU::OPEXEC CPU::EOR(ADDRESS source)
+	OPEXEC CPU::EOR(ADDRESS source)
 	{
 		BYTE data = A ^ bus.readFromMemory(source);
 		STATUS.NEGATIVE = (data & 0x80) ? 1 : 0;
@@ -1020,7 +1020,7 @@ namespace nesemulator
 		A = data;
 	};
 
-	CPU::OPEXEC CPU::INC(ADDRESS source)
+	OPEXEC CPU::INC(ADDRESS source)
 	{
 		BYTE data = (bus.readFromMemory(source) + 1);
 		STATUS.ZERO = (data == 0x00) ? 1 : 0;
@@ -1028,26 +1028,26 @@ namespace nesemulator
 		bus.writeToMemory(source,data);
 	};
 
-	CPU::OPEXEC CPU::INX_OP(ADDRESS source)
+	OPEXEC CPU::INX_OP(ADDRESS source)
 	{
 		X = (X + 1);
 		STATUS.ZERO = (X == 0x00) ? 1 : 0;
 		STATUS.NEGATIVE = (X & 0x80) ? 1 : 0;
 	};
 
-	CPU::OPEXEC CPU::INY_OP(ADDRESS source)
+	OPEXEC CPU::INY_OP(ADDRESS source)
 	{
 		Y = (Y + 1);
 		STATUS.ZERO = (Y == 0x00) ? 1 : 0;
 		STATUS.NEGATIVE = (Y & 0x80) ? 1 : 0;
 	};
 
-	CPU::OPEXEC CPU::JMP(ADDRESS source)
+	OPEXEC CPU::JMP(ADDRESS source)
 	{
 		programCounter = source;
 	};
 
-	CPU::OPEXEC CPU::JSR(ADDRESS source)
+	OPEXEC CPU::JSR(ADDRESS source)
 	{
 		programCounter--;
 		push((programCounter >> 8) &  0x00FF);
@@ -1055,7 +1055,7 @@ namespace nesemulator
 		programCounter = source;
 	};
 
-	CPU::OPEXEC CPU::LDA(ADDRESS source)
+	OPEXEC CPU::LDA(ADDRESS source)
 	{
 		A = bus.readFromMemory(source);
 		STATUS.ZERO = (A == 0x00) ? 1 : 0;
@@ -1063,7 +1063,7 @@ namespace nesemulator
 		additionalCycle1++;
 	};
 
-	CPU::OPEXEC CPU::LDX(ADDRESS source)
+	OPEXEC CPU::LDX(ADDRESS source)
 	{
 		X = bus.readFromMemory(source);
 		STATUS.ZERO = (X == 0) ? 1 : 0;
@@ -1071,7 +1071,7 @@ namespace nesemulator
 		additionalCycle1++;
 	};
 
-	CPU::OPEXEC CPU::LDY(ADDRESS source)
+	OPEXEC CPU::LDY(ADDRESS source)
 	{
 		Y = bus.readFromMemory(source);
 		STATUS.ZERO = (Y == 0) ? 1 : 0;
@@ -1079,7 +1079,7 @@ namespace nesemulator
 		additionalCycle1++;
 	};
 
-	CPU::OPEXEC CPU::LSR(ADDRESS source)
+	OPEXEC CPU::LSR(ADDRESS source)
 	{
 		ADDRESS data = currentInstruction.addr == &CPU::IMP ? A : bus.readFromMemory(source);
 		STATUS.CARRY = data & 0x0001;
@@ -1093,22 +1093,22 @@ namespace nesemulator
 	};
 
 
-	CPU::OPEXEC CPU::NOP(ADDRESS source)
+	OPEXEC CPU::NOP(ADDRESS source)
 	{ };
 
-	CPU::OPEXEC CPU::ORA(ADDRESS source)
+	OPEXEC CPU::ORA(ADDRESS source)
 	{
 		A = bus.readFromMemory(source) | A;
 		STATUS.ZERO = (A == 0x00) ? 1 : 0;
 		STATUS.NEGATIVE = (A & 0x80) ? 1 : 0;
 	};
 
-	CPU::OPEXEC CPU::PHA(ADDRESS source)
+	OPEXEC CPU::PHA(ADDRESS source)
 	{
 		push(A);
 	};
 
-	CPU::OPEXEC CPU::PHP(ADDRESS source)
+	OPEXEC CPU::PHP(ADDRESS source)
 	{
 		STATUS.BREAK = 1;
 		STATUS.UNUSED = 1;
@@ -1117,19 +1117,19 @@ namespace nesemulator
 		STATUS.UNUSED = 0;
 	};
 
-	CPU::OPEXEC CPU::PLA(ADDRESS source)
+	OPEXEC CPU::PLA(ADDRESS source)
 	{
 		A = pop();
 		STATUS.ZERO = (A == 0x00) ? 1 : 0;
 		STATUS.NEGATIVE = (A & 0x80) ? 1 : 0;
 	};
 
-	CPU::OPEXEC CPU::PLP(ADDRESS source)
+	OPEXEC CPU::PLP(ADDRESS source)
 	{
 		STATUS.combined = pop();
 	};
 
-	CPU::OPEXEC CPU::ROL(ADDRESS source)
+	OPEXEC CPU::ROL(ADDRESS source)
 	{
 		ADDRESS data =  currentInstruction.addr == &CPU::IMP ? A : bus.readFromMemory(source);
 		bool temp = data & 0x80;
@@ -1144,7 +1144,7 @@ namespace nesemulator
 			bus.writeToMemory(source,data);
 	};
 
-	CPU::OPEXEC CPU::ROR(ADDRESS source)
+	OPEXEC CPU::ROR(ADDRESS source)
 	{
 		BYTE data = currentInstruction.addr == &CPU::IMP ? A : bus.readFromMemory(source);
 		bool temp = CHECK_BIT(data,0);
@@ -1160,7 +1160,7 @@ namespace nesemulator
 	};
 
 
-	CPU::OPEXEC CPU::RTI(ADDRESS source)
+	OPEXEC CPU::RTI(ADDRESS source)
 	{
 		BYTE low,high;
 
@@ -1173,7 +1173,7 @@ namespace nesemulator
 		programCounter = (high << 8) | low; 
 	};
 
-	CPU::OPEXEC CPU::RTS(ADDRESS source)
+	OPEXEC CPU::RTS(ADDRESS source)
 	{
 		BYTE low,high;
 
@@ -1185,7 +1185,7 @@ namespace nesemulator
 		
 	};
 
-	CPU::OPEXEC CPU::SBC(ADDRESS source)
+	OPEXEC CPU::SBC(ADDRESS source)
 	{
 		BYTE data = bus.readFromMemory(source);
 
@@ -1204,77 +1204,77 @@ namespace nesemulator
 		additionalCycle1++;
 	};
 
-	CPU::OPEXEC CPU::SEC(ADDRESS source)
+	OPEXEC CPU::SEC(ADDRESS source)
 	{
 		STATUS.CARRY = 1;
 	};
 
-	CPU::OPEXEC CPU::SED(ADDRESS source)
+	OPEXEC CPU::SED(ADDRESS source)
 	{
 		STATUS.DECIMAL = 1;
 	};
 
-	CPU::OPEXEC CPU::SEI(ADDRESS source)
+	OPEXEC CPU::SEI(ADDRESS source)
 	{
 		STATUS.INTERRUPT = 1;
 	};
 
-	CPU::OPEXEC CPU::STA(ADDRESS source)
+	OPEXEC CPU::STA(ADDRESS source)
 	{
 		bus.writeToMemory(source,A);
 	};
 
-	CPU::OPEXEC CPU::STX(ADDRESS source)
+	OPEXEC CPU::STX(ADDRESS source)
 	{
 		bus.writeToMemory(source,X);
 	};
 
-	CPU::OPEXEC CPU::STY(ADDRESS source)
+	OPEXEC CPU::STY(ADDRESS source)
 	{
 		bus.writeToMemory(source,Y);
 	};
 
-	CPU::OPEXEC CPU::TAX(ADDRESS source)
+	OPEXEC CPU::TAX(ADDRESS source)
 	{
 		X = A;
 		STATUS.ZERO = (X == 0x00) ? 1 : 0;
 		STATUS.NEGATIVE = (X & 0x80) ? 1 : 0;
 	};
 
-	CPU::OPEXEC CPU::TAY(ADDRESS source)
+	OPEXEC CPU::TAY(ADDRESS source)
 	{
 		Y = A;
 		STATUS.ZERO = (Y == 0x00) ? 1 : 0;
 		STATUS.NEGATIVE = (Y & 0x80) ? 1 : 0;
 	};
 
-	CPU::OPEXEC CPU::TSX(ADDRESS source)
+	OPEXEC CPU::TSX(ADDRESS source)
 	{
 		X = SP;
 		STATUS.ZERO = (X == 0x00) ? 1 : 0;
 		STATUS.NEGATIVE = (X & 0x80) ? 1 : 0;
 	};
 
-	CPU::OPEXEC CPU::TXA(ADDRESS source)
+	OPEXEC CPU::TXA(ADDRESS source)
 	{
 		A = X;
 		STATUS.ZERO = (A== 0x00) ? 1 : 0;
 		STATUS.NEGATIVE = (A & 0x80) ? 1 : 0;
 	};
 
-	CPU::OPEXEC CPU::TYA(ADDRESS source)
+	OPEXEC CPU::TYA(ADDRESS source)
 	{
 		A = Y;
 		STATUS.ZERO = (A== 0x00) ? 1 : 0;
 		STATUS.NEGATIVE = (A & 0x80) ? 1 : 0;
 	};
 
-	CPU::OPEXEC CPU::TXS(ADDRESS source)
+	OPEXEC CPU::TXS(ADDRESS source)
 	{
 		SP = X;	
 	};
 
-	CPU::OPEXEC CPU::ILLEGAL(ADDRESS source)
+	OPEXEC CPU::ILLEGAL(ADDRESS source)
 	{
 
 	};

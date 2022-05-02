@@ -66,15 +66,6 @@ namespace nesemulator
                 BYTE combined;
             } STATUS;
 
-
-            using OPEXEC = void;
-            using OPEXEC_PTR = OPEXEC (CPU::*)(ADDRESS source);
-            using ADDRESSING_MODE = ADDRESS(CPU::*)();
-            struct INSTRUCTION 
-            {
-                OPEXEC_PTR operation;
-                ADDRESSING_MODE addr;
-            };
             /**
              * Instruction table of register
              */
@@ -122,7 +113,7 @@ namespace nesemulator
             Bus& bus;
 
             /* CPU Clock */
-            uint64_t clock = 0;
+            TIMER clock = 0;
 
             ADDRESS source;
 

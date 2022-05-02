@@ -104,7 +104,7 @@ namespace nesemulator
 
     void NES::log()
     {
-        //std::cout << cpu;
+
         bus.print();
         std::cout << cartridge;
     }
@@ -123,9 +123,6 @@ namespace nesemulator
     {
         RUN_FOREVER
         {
-            // do
-            //     tick();
-            // while(!ppu.isFrameDone());
             while(SDL_GetQueuedAudioSize(1) < SAMPLE_PER_FRAME)
             {
                 tick();
@@ -141,7 +138,6 @@ namespace nesemulator
             ppu.getPatternTable();
             display.renderDebugFrame();
     #endif
-            // ppu.clearFrameDone();
         }
     }
 
@@ -194,6 +190,10 @@ namespace nesemulator
                 }
             }
         }
+    }
+
+    void NES::saveCurrentState()
+    {
     }
 
 }

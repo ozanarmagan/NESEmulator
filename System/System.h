@@ -2,6 +2,7 @@
 #include <fstream>
 
 #include "../Utils/handler.h"
+#include "../State/State.h"
 #include "../Cartridge/Cartridge.h"
 #include "../Mapper/MapperBase.h"
 #include "../Mapper/Mapper0.h"
@@ -17,7 +18,7 @@
 #include "../Controller/Controller.h"
 #include "../Audio/Audio.h"
 #include "../Utils/Queue.h"
-#include "../State/State.h"
+
 
 namespace nesemulator
 {

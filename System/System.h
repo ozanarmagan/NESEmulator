@@ -3,6 +3,7 @@
 
 #include "../Utils/handler.h"
 #include "../State/State.h"
+#include "../State/StateManagement.h"
 #include "../Cartridge/Cartridge.h"
 #include "../Mapper/MapperBase.h"
 #include "../Mapper/Mapper0.h"
@@ -49,7 +50,7 @@ namespace nesemulator
             void mainLoop();
             void tick();
             void DMA();
-            uint64_t clock = 0;
+            TIMER clock = 0;
             SDL_Event events;
             Controller controller;
             double innerClock = 0;

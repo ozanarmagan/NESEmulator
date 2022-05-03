@@ -1,6 +1,8 @@
 #ifndef FUNCTIONS_H
 #define FUNCTIONS_H
 
+#include "typedefs.h"
+
 namespace nesemulator
 {
     // Helper functions for bitwise operations

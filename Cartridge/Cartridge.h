@@ -28,9 +28,9 @@ namespace nesemulator
             void setCHRNum(BYTE _CHRNum) { CHRNum = _CHRNum;};
             friend std::ostream& operator<<(std::ostream& stream,Cartridge& cart);
         private:    
+            friend class NES;
             BYTE* PRGmemory;
             BYTE* CHRmemory;
-
             BYTE mapperID;
             BYTE PRGNum;
             BYTE CHRNum;

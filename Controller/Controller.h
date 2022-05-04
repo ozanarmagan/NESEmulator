@@ -26,7 +26,7 @@ namespace nesemulator
             void handleInput();
         private:
             void getKeyState() {const BYTE* keys_ = SDL_GetKeyboardState(NULL);keys = keys_;};
-
+            friend class NES;
             const BYTE *keys; //SDL Keys
             Bus* bus;
             BYTE controllerStatus[2] = {0x00, 0x00};

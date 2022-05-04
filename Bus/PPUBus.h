@@ -41,7 +41,7 @@ namespace nesemulator
             BYTE FG_PIXEL = 0x00;
             BYTE FG_PALETTE = 0x00;
             BYTE FG_PRIORITY = 0x00;
-            
+            friend class NES;
             union
             {
                 struct 
@@ -130,7 +130,7 @@ namespace nesemulator
             BYTE OAM_offset = 0x00;
 
             Array<BYTE> SPRT_SHIFTER_LOW  = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-            Array<BYTE> SPRT_SHIFTER_HIGH = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};;
+            Array<BYTE> SPRT_SHIFTER_HIGH = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
             BYTE SPRT_PATTERN_LOW = 0x00,SPRT_PATTERN_HIGH = 0x00;
             ADDRESS SPRT_PATTERN_ADDR_L = 0x0000;
     };

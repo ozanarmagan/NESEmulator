@@ -39,7 +39,7 @@ namespace nesemulator
             void IRQ();
             friend std::ostream& operator<<(std::ostream &out,CPU &cpu);
         private:
-
+            friend class NES;
     #ifdef CPUDEBUG
             void logToFile();
             FILE* logFile;

@@ -2,6 +2,7 @@
 #define STATE_MANAGEMENT_H
 
 #include <cstring>
+#include <memory>
 
 #include "../Utils/handler.h"
 #include "../APU/AudioWaves.h"
@@ -189,7 +190,7 @@ namespace nesemulator
             PPUBusState ppuBus;
             BYTE controllerState[2];
             DisplayState display;
-            Mapper::MapperState mapper;
+            std::shared_ptr<Mapper::MapperState> mapper;
             PPUState ppu;
         };
     }

@@ -38,6 +38,7 @@ namespace nesemulator
 				void getPatternTable();
 		#endif
 		private:
+				friend class NES;
 				Bus* mainBus;
 				Cartridge* cartridge;
 				PPUBus* ppuBus;

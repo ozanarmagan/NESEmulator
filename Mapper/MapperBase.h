@@ -23,6 +23,7 @@ namespace nesemulator
             void setMirroring(MIRRORING mirrorirngType) { mirroring = mirrorirngType; };
             MIRRORING getMirroring() { return mirroring; };
         protected:
+            friend class NES;
             Cartridge *cartridge;
             MIRRORING mirroring = MIRRORING::HORIZONTAL;
     };

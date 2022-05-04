@@ -13,6 +13,7 @@ class Array
         Array();
         Array(Array<T> &other);
         Array(std::initializer_list<T> list);
+        Array(const T* rawArray,const size_t& size);
         int inline getSize() const { return size; };
         void clear();
         void add(const T element);
@@ -55,8 +56,9 @@ class Array
         inline iterator end()  { return iterator(head + size); };
     private:
         T* head;
-        int size,capacity;
+        size_t size,capacity;
         bool isFull() const { return size == capacity; };
+        increaseCapacity();
 };
 
 
@@ -91,6 +93,8 @@ template <typename T>
 void Array<T>::add(T element)
 {    
     head[size++] = element;
+    if(isFull())
+        increaseCapacity();
 }
 
 
@@ -103,6 +107,8 @@ void Array<T>::insert(T element,int index)
         head[i] = head[i-1];
     head[index] = element;
     size++;
+    if(isFull())
+        increaseCapacity();
 }
 
 
@@ -124,6 +130,24 @@ Array<T>::~Array<T>()
     delete [] head;
 }
 
+template <typename T>
+Array::Array(const T* rawArray,const size_t& size)
+{
+    head = rawArray;
+    this->size = size;
+    this->capacity = size;
+    increaseCapacity();
+}
+
+template <typename T>
+Array<T>::increaseCapacity()
+{
+    auto oldHead = head;
+    head = new T[capacity * 2];
+    capacity *= 2;
+    for(int i = 0;i < size;i++)
+        head[i] = oldHead[i];
+}
 
 
 

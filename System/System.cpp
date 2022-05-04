@@ -53,9 +53,15 @@ namespace nesemulator
                 cartridge.setCHRNum(header.CHRROMChunks);
                 BYTE* CHRmem;
                 if(header.CHRROMChunks == 0) // If it is CHR RAM
+                {
+                    cartridge.setCHRNum(1);
                     CHRmem = new BYTE[8192];
+                }
                 else
+                {
                     CHRmem = new BYTE[header.CHRROMChunks * 8192];
+                    cartridge.setCHRNum(header.CHRROMChunks);
+                }
                 file.read((char*) CHRmem,(header.CHRROMChunks != 0 ? header.CHRROMChunks : 1) * 8192);
                 cartridge.loadCHRData(CHRmem);
             }
@@ -194,6 +200,128 @@ namespace nesemulator
 
     void NES::saveCurrentState()
     {
+        StateManagement::StateInfo state;
+        state.cartridge.initCartridge(cartridge.getPRGNum() * 16384, cartridge.getCHRNum() * 8192);
+        state.cartridge.loadPRGData(std::shared_ptr<BYTE>(cartridge.PRGmemory));
+        state.cartridge.loadCHRData(std::shared_ptr<BYTE>(cartridge.CHRmemory));
+        
+        state.apu.clock = apu.clock;
+        state.apu.countToFrameCounterReset = apu.countToFrameCounterReset;
+        state.apu.dmc = apu.dmc;
+        state.apu.frameCounter = apu.frameCounter;
+        state.apu.frameCounterMode = apu.frameCounterMode == APU::FRAMECOUNTERMODE::MODE4 ? 0 : 1;
+        state.apu.high1 = apu.high1;
+        state.apu.high2 = apu.high2;
+        state.apu.incomingFrameCounterReset = apu.incomingFrameCounterReset;
+        state.apu.low = apu.low;
+        state.apu.noise = apu.noise;
+        state.apu.pulse1 = apu.pulse1;
+        state.apu.pulse2 = apu.pulse2;
+        state.apu.triangle = apu.triangle;
+
+        state.cpu.A = cpu.A;
+        state.cpu.additionalCycle0 = cpu.additionalCycle0;
+        state.cpu.additionalCycle1 = cpu.additionalCycle1;
+        state.cpu.clock = cpu.clock;
+        state.cpu.currentInstruction = cpu.currentInstruction;
+        state.cpu.currentOpCode = cpu.currentOpCode;
+        state.cpu.cycleRemaining = cpu.cycleRemaining;
+        state.cpu.programCounter = cpu.programCounter;
+        state.cpu.SP = cpu.SP;
+        state.cpu.STATUS = cpu.STATUS.combined;
+        state.cpu.X = cpu.X;
+        state.cpu.Y = cpu.Y;
+
+        std::memcpy(state.bus.controllerCache,bus.controllerCache,2);
+        std::memcpy(state.bus.controllerMemory,bus.controllerMemory,2);
+        state.bus.DMA = bus.DMA;
+        state.bus.DMA_data = bus.DMA_data;
+        state.bus.DMA_dummy = bus.DMA_dummy;
+        state.bus.DMA_high = bus.DMA_high;
+        state.bus.DMA_low = bus.DMA_low;
+        std::memcpy(state.bus.memory,bus.memory,2048);
+        
+
+        std::memcpy(state.controllerState,controller.controllerStatus,2);
+
+        state.innerClock = innerClock;
+        state.systemTime = clock;
+
+        state.ppu.col = ppu.col;
+        state.ppu.frameDone = ppu.frameDone;
+        state.ppu.nextRowSprites = ppu.nextRowSprites;
+        state.ppu.odd = ppu.odd;
+        state.ppu.palette = ppu.palette;
+        state.ppu.pixel = ppu.pixel;
+        state.ppu.row = ppu.row;
+        state.ppu.spriteZero = ppu.spriteZero;
+        state.ppu.spriteZeroIndicator = ppu.spriteZeroIndicator;
+
+
+        state.ppuBus.addressToggle = ppuBus.addressToggle;
+        state.ppuBus.BG_NEXT_ATTR = ppuBus.BG_RENDER_FETCH.BG_NEXT_ATTR;
+        state.ppuBus.BG_NEXT_HIGH = ppuBus.BG_RENDER_FETCH.BG_NEXT_HIGH;
+        state.ppuBus.BG_NEXT_ID = ppuBus.BG_RENDER_FETCH.BG_NEXT_ID;
+        state.ppuBus.BG_NEXT_LOW = ppuBus.BG_RENDER_FETCH.BG_NEXT_LOW;
+        state.ppuBus.BG_PALETTE = ppuBus.BG_PALETTE;
+        state.ppuBus.BG_PIXEL = ppuBus.BG_PIXEL;
+        state.ppuBus.BG_SHIFTER_ATTR_HIGH = ppuBus.BG_SHIFTER_ATTR_HIGH.combined;
+        state.ppuBus.BG_SHIFTER_ATTR_LOW = ppuBus.BG_SHIFTER_ATTR_LOW.combined;
+        state.ppuBus.BG_SHIFTER_PATTERN_HIGH = ppuBus.BG_SHIFTER_PATTERN_HIGH.combined;
+        state.ppuBus.BG_SHIFTER_PATTERN_LOW = ppuBus.BG_SHIFTER_PATTERN_LOW.combined;
+        state.ppuBus.FG_PALETTE = ppuBus.FG_PALETTE;
+        state.ppuBus.FG_PIXEL = ppuBus.FG_PIXEL;
+        state.ppuBus.FG_PRIORITY = ppuBus.FG_PRIORITY;
+        state.ppuBus.FINE_X = ppuBus.FINE_X;
+        state.ppuBus.vRAM = ppuBus.vRAM.combined;
+        state.ppuBus.tempRAM = ppuBus.tempRAM.combined;
+        std::memcpy(state.ppuBus.nameTables,ppuBus.nameTables,4096);
+        std::memcpy(state.ppuBus.palettes,ppuBus.palettes,32);
+        std::memcpy(state.ppuBus.OAM,ppuBus.OAM,32);
+        state.ppuBus.NMI = ppuBus.NMI;
+        state.ppuBus.OAM_offset = ppuBus.OAM_offset;
+        state.ppuBus.PPUCTRL = ppuBus.PPUCTRL.combined;
+        state.ppuBus.PPUMASK = ppuBus.PPUMASK.combined;
+        state.ppuBus.PPUSTATUS = ppuBus.PPUSTATUS.combined;
+        state.ppuBus.SPRT_PATTERN_ADDR_L = ppuBus.SPRT_PATTERN_ADDR_L;
+        state.ppuBus.SPRT_PATTERN_HIGH = ppuBus.SPRT_PATTERN_HIGH;
+        state.ppuBus.ppuBuffer = ppuBus.ppuBuffer;
+        state.ppuBus.SPRT_SHIFTER_HIGH = ppuBus.SPRT_SHIFTER_HIGH;
+        state.ppuBus.SPRT_SHIFTER_LOW = ppuBus.SPRT_SHIFTER_LOW;
+        
+        switch(mapperID)
+        {
+            case 0:
+                state.mapperID = 0;
+                break;
+            case 1:
+                state.mapperID = 1;
+                state.mapper = std::make_shared<StateManagement::Mapper::Mapper1State>();
+                std::memcpy(static_cast<Mapper1*>(state.mapper.get())->PRGRAM,static_cast<Mapper1*>(mapper.get())->PRGRAM,8*1024);
+                static_cast<Mapper1*>(state.mapper.get())->REGISTERS.controlReg = static_cast<Mapper1*>(mapper.get())->REGISTERS.controlReg;
+                static_cast<Mapper1*>(state.mapper.get())->REGISTERS.tempReg = static_cast<Mapper1*>(mapper.get())->REGISTERS.tempReg;
+                static_cast<Mapper1*>(state.mapper.get())->REGISTERS.tempRegNum = static_cast<Mapper1*>(mapper.get())->REGISTERS.tempRegNum;
+                static_cast<Mapper1*>(state.mapper.get())->CHR0; = static_cast<Mapper1*>(mapper.get())->CHR0;
+                static_cast<Mapper1*>(state.mapper.get())->CHR1 = static_cast<Mapper1*>(mapper.get())->CHR1;
+                static_cast<Mapper1*>(state.mapper.get())->CHRFull = static_cast<Mapper1*>(mapper.get())->CHRFull;
+                static_cast<Mapper1*>(state.mapper.get())->PRG0; = static_cast<Mapper1*>(mapper.get())->PRG0;
+                static_cast<Mapper1*>(state.mapper.get())->PRG1; = static_cast<Mapper1*>(mapper.get())->PRG1;
+                static_cast<Mapper1*>(state.mapper.get())->PRGFull; = static_cast<Mapper1*>(mapper.get())->PRGFull;
+                break;
+            case 2:
+                state.mapperID = 2;
+                state.mapper = std::make_shared<StateManagement::Mapper::Mapper2State>();
+                static_cast<Mapper2*>(state.mapper.get())->lowerBankOffset; = static_cast<Mapper2*>(mapper.get())->lowerBankOffset;
+                static_cast<Mapper2*>(state.mapper.get())->higherBankOffset; = static_cast<Mapper2*>(mapper.get())->higherBankOffset;
+                break;
+            case 3:
+                static_cast<Mapper3*>(state.mapper.get())->selectedCHRbank; = static_cast<Mapper3*>(mapper.get())->selectedCHRbank;
+                break;
+            default:
+                break;
+        }
+
+
     }
 
 }

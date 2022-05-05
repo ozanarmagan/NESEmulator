@@ -140,6 +140,8 @@ namespace nesemulator
                 innerClock += 1.0;
             }
             display.renderFrame();
+            if(controller.getSaveButtonStatus())
+                saveCurrentState();
     #ifdef DEBUG
             ppu.getPatternTable();
             display.renderDebugFrame();
@@ -167,6 +169,7 @@ namespace nesemulator
             cpu.NMI();
             ppuBus.setNMI(false);
         }
+
 
         clock++;
     }
@@ -202,8 +205,8 @@ namespace nesemulator
     {
         StateManagement::StateInfo state;
         state.cartridge.initCartridge(cartridge.getPRGNum() * 16384, cartridge.getCHRNum() * 8192);
-        state.cartridge.loadPRGData(std::shared_ptr<BYTE>(cartridge.PRGmemory));
-        state.cartridge.loadCHRData(std::shared_ptr<BYTE>(cartridge.CHRmemory));
+        state.cartridge.loadPRGData(cartridge.PRGmemory);
+        state.cartridge.loadCHRData(cartridge.CHRmemory);
         
         state.apu.clock = apu.clock;
         state.apu.countToFrameCounterReset = apu.countToFrameCounterReset;
@@ -288,8 +291,8 @@ namespace nesemulator
         state.ppuBus.ppuBuffer = ppuBus.ppuBuffer;
         state.ppuBus.SPRT_SHIFTER_HIGH = ppuBus.SPRT_SHIFTER_HIGH;
         state.ppuBus.SPRT_SHIFTER_LOW = ppuBus.SPRT_SHIFTER_LOW;
-        
-        switch(mapperID)
+
+        switch(cartridge.getMapperID())
         {
             case 0:
                 state.mapperID = 0;
@@ -297,31 +300,31 @@ namespace nesemulator
             case 1:
                 state.mapperID = 1;
                 state.mapper = std::make_shared<StateManagement::Mapper::Mapper1State>();
-                std::memcpy(static_cast<Mapper1*>(state.mapper.get())->PRGRAM,static_cast<Mapper1*>(mapper.get())->PRGRAM,8*1024);
-                static_cast<Mapper1*>(state.mapper.get())->REGISTERS.controlReg = static_cast<Mapper1*>(mapper.get())->REGISTERS.controlReg;
-                static_cast<Mapper1*>(state.mapper.get())->REGISTERS.tempReg = static_cast<Mapper1*>(mapper.get())->REGISTERS.tempReg;
-                static_cast<Mapper1*>(state.mapper.get())->REGISTERS.tempRegNum = static_cast<Mapper1*>(mapper.get())->REGISTERS.tempRegNum;
-                static_cast<Mapper1*>(state.mapper.get())->CHR0; = static_cast<Mapper1*>(mapper.get())->CHR0;
-                static_cast<Mapper1*>(state.mapper.get())->CHR1 = static_cast<Mapper1*>(mapper.get())->CHR1;
-                static_cast<Mapper1*>(state.mapper.get())->CHRFull = static_cast<Mapper1*>(mapper.get())->CHRFull;
-                static_cast<Mapper1*>(state.mapper.get())->PRG0; = static_cast<Mapper1*>(mapper.get())->PRG0;
-                static_cast<Mapper1*>(state.mapper.get())->PRG1; = static_cast<Mapper1*>(mapper.get())->PRG1;
-                static_cast<Mapper1*>(state.mapper.get())->PRGFull; = static_cast<Mapper1*>(mapper.get())->PRGFull;
+                std::memcpy(static_cast<StateManagement::Mapper::Mapper1State*>(state.mapper.get())->PRGRAM,static_cast<Mapper1*>(mapper.get())->PRGRAM,8*1024);
+                static_cast<StateManagement::Mapper::Mapper1State*>(state.mapper.get())->REGISTERS.controlReg = static_cast<Mapper1*>(mapper.get())->REGISTERS.controlReg;
+                static_cast<StateManagement::Mapper::Mapper1State*>(state.mapper.get())->REGISTERS.tempReg = static_cast<Mapper1*>(mapper.get())->REGISTERS.tempReg;
+                static_cast<StateManagement::Mapper::Mapper1State*>(state.mapper.get())->REGISTERS.tempRegNum = static_cast<Mapper1*>(mapper.get())->REGISTERS.tempRegNum;
+                static_cast<StateManagement::Mapper::Mapper1State*>(state.mapper.get())->CHR0 = static_cast<Mapper1*>(mapper.get())->CHR0;
+                static_cast<StateManagement::Mapper::Mapper1State*>(state.mapper.get())->CHR1 = static_cast<Mapper1*>(mapper.get())->CHR1;
+                static_cast<StateManagement::Mapper::Mapper1State*>(state.mapper.get())->CHRFull = static_cast<Mapper1*>(mapper.get())->CHRFull;
+                static_cast<StateManagement::Mapper::Mapper1State*>(state.mapper.get())->PRG0 = static_cast<Mapper1*>(mapper.get())->PRG0;
+                static_cast<StateManagement::Mapper::Mapper1State*>(state.mapper.get())->PRG1 = static_cast<Mapper1*>(mapper.get())->PRG1;
+                static_cast<StateManagement::Mapper::Mapper1State*>(state.mapper.get())->PRGFull  = static_cast<Mapper1*>(mapper.get())->PRGFull;
                 break;
             case 2:
                 state.mapperID = 2;
                 state.mapper = std::make_shared<StateManagement::Mapper::Mapper2State>();
-                static_cast<Mapper2*>(state.mapper.get())->lowerBankOffset; = static_cast<Mapper2*>(mapper.get())->lowerBankOffset;
-                static_cast<Mapper2*>(state.mapper.get())->higherBankOffset; = static_cast<Mapper2*>(mapper.get())->higherBankOffset;
+                static_cast<StateManagement::Mapper::Mapper2State*>(state.mapper.get())->lowerBankOffset = static_cast<Mapper2*>(mapper.get())->lowerBankOffset;
+                static_cast<StateManagement::Mapper::Mapper2State*>(state.mapper.get())->higherBankOffset = static_cast<Mapper2*>(mapper.get())->higherBankOffset;
                 break;
             case 3:
-                static_cast<Mapper3*>(state.mapper.get())->selectedCHRbank; = static_cast<Mapper3*>(mapper.get())->selectedCHRbank;
+                static_cast<StateManagement::Mapper::Mapper3State*>(state.mapper.get())->selectedCHRbank = static_cast<Mapper3*>(mapper.get())->selectedCHRbank;
                 break;
             default:
                 break;
         }
 
-
+        state.writeToFile("save.bin");
     }
 
 }

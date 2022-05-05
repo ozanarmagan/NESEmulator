@@ -32,6 +32,7 @@ namespace nesemulator
             HighPassFilter high1;
             HighPassFilter high2;
             LowPassFilter low;
+            friend class NES;
     };
 }
 

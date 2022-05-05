@@ -18,6 +18,7 @@ namespace nesemulator
             void resetRegisters();
             void updatePRG();
             BYTE PRGRAM[8*1024];
+            friend class NES;
             struct {
                 BYTE controlReg = 0x00,tempReg = 0x00,tempRegNum = 0x00;
             } REGISTERS;

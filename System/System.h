@@ -58,7 +58,6 @@ namespace nesemulator
             State states[STATE_COUNT];
             void loadState(int index);
             void saveCurrentState();
-            short mapperID;
             std::string fileName;
     };
 }

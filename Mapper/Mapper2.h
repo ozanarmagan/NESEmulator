@@ -17,6 +17,7 @@ namespace nesemulator
         private:
             BYTE lowerBankOffset = 0x00; // Offset for first 16KB switchable PRG ROM
             BYTE higherBankOffset = 0x00; // Offset for lasat 16KB fixed PRG ROM
+            friend class NES;
     };
 }
 

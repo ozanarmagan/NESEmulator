@@ -62,6 +62,21 @@ namespace nesemulator
         AUDIOINT& period;
         AUDIOINT& timer;
 
+        void operator=(SWEEPER& other)
+        {
+            pulse1 = other.pulse1;
+            enabled = other.enabled;
+            negative = other.negative;
+            reload = other.reload;
+            silenceChannel = other.silenceChannel;
+            dividerPeriod = other.dividerPeriod;
+            targetPeriod = other.targetPeriod;
+            shiftCount = other.shiftCount;
+            divider = other.divider;
+            period = other.period;
+            timer = other.timer;
+        }
+
         void calculateTargetPeriod()
         {
             AUDIOINT change = period >> shiftCount;

@@ -16,6 +16,7 @@ namespace nesemulator
             void MapWritePpu(ADDRESS address,BYTE value) override;
         private:
             BYTE selectedCHRbank = 0x00; // Selected CHR bank on Cartridge 
+            friend class NES;
     };
 }
 

@@ -13,7 +13,7 @@ class Array
         Array();
         Array(Array<T> &other);
         Array(std::initializer_list<T> list);
-        Array(const T* rawArray,const size_t& size);
+        Array(T* rawArray,const size_t& size);
         int inline getSize() const { return size; };
         void clear();
         void add(const T element);
@@ -22,6 +22,8 @@ class Array
         inline T& last() { return head[size - 1]; };
         inline T& first() {return *head; };
         bool isEmpty() const { return size == 0; };
+        void operator=(const Array<T>& other);
+        const T* getRaw() { return head; }
         ~Array();
         class iterator : public std::iterator<std::random_access_iterator_tag, T>
         {
@@ -58,7 +60,7 @@ class Array
         T* head;
         size_t size,capacity;
         bool isFull() const { return size == capacity; };
-        increaseCapacity();
+        void increaseCapacity();
 };
 
 
@@ -125,13 +127,13 @@ void Array<T>::clear()
 
 
 template <typename T>
-Array<T>::~Array<T>()
+Array<T>::~Array()
 {
     delete [] head;
 }
 
 template <typename T>
-Array::Array(const T* rawArray,const size_t& size)
+Array<T>::Array(T* rawArray,const size_t& size)
 {
     head = rawArray;
     this->size = size;
@@ -140,13 +142,23 @@ Array::Array(const T* rawArray,const size_t& size)
 }
 
 template <typename T>
-Array<T>::increaseCapacity()
+void Array<T>::increaseCapacity()
 {
     auto oldHead = head;
     head = new T[capacity * 2];
     capacity *= 2;
     for(int i = 0;i < size;i++)
         head[i] = oldHead[i];
+}
+
+template <typename T>
+void Array<T>::operator=(const Array<T>& other)
+{
+    delete [] head;
+    head = new T[other.capacity];
+    size = other.size;
+    for(int i = 0;i < other.size;i++)
+        head[i] = other.head[i];
 }
 
 

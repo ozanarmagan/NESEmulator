@@ -21,7 +21,8 @@ namespace nesemulator
             void setJoyButton(int id,int which);
             void clearJoyButton(int id,int which);
             void setJoyAxis(int id,int value,int which);
-            const bool getSaveButtonStatus() { return saveStateButton; }
+            const bool& getSaveButtonStatus() { return saveStateButton; }
+            const bool& getLoadButtonStatus() { return loadStateButton; }
             void setKey(int id);
             void clearKey(int id);
             void handleInput();
@@ -32,6 +33,7 @@ namespace nesemulator
             Bus* bus;
             BYTE controllerStatus[2] = {0x00, 0x00};
             bool saveStateButton;
+            bool loadStateButton;
             SDL_GameController *contorller1 = nullptr;
             SDL_GameController *contorller2 = nullptr;
     };

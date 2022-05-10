@@ -19,5 +19,5 @@ namespace nesemulator
 		stream << "CARTRIDGE INFO:\n" << "Number of PRG ROM : " << bTohex(cart.getPRGNum(),2) << std::endl;
 		stream << "Number of CHR ROM : " << bTohex(cart.getCHRNum(),2) << std::endl << "Mapper ID: " << bTohex(cart.mapperID,2) << std::endl;
 		return stream;
-}
+	}
 }

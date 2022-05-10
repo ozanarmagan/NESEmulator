@@ -135,6 +135,9 @@ namespace nesemulator
             case SDL_SCANCODE_T:
                 saveStateButton = true;
                 break;
+            case SDL_SCANCODE_Y:
+                loadStateButton = true;
+                break;
         }
         bus->setControllerMemory(controllerStatus);
     }
@@ -169,6 +172,9 @@ namespace nesemulator
                 break;
             case SDL_SCANCODE_T:
                 saveStateButton = false;
+                break;
+            case SDL_SCANCODE_Y:
+                loadStateButton = false;
                 break;
         }
         bus->setControllerMemory(controllerStatus);

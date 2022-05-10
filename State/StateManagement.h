@@ -205,7 +205,6 @@ namespace nesemulator
                     default:
                         break;
                 }
-                
 
                 file.write((char*)&ppu.col, sizeof(short));
                 file.write((char*)&ppu.row, sizeof(short));
@@ -251,12 +250,11 @@ namespace nesemulator
                 file.write((char*)&ppuBus.vRAM, sizeof(ADDRESS));
                 size = ppuBus.SPRT_SHIFTER_HIGH.getSize();
                 file.write((char*)&size,sizeof(int));
-                file.write((char*)ppuBus.SPRT_SHIFTER_HIGH.getRaw(),sizeof(OBJECT_ATTRIBUTE) * size);
+                file.write((char*)ppuBus.SPRT_SHIFTER_HIGH.getRaw(), size);
                 size = ppuBus.SPRT_SHIFTER_LOW.getSize();
                 file.write((char*)&size,sizeof(int));
-                file.write((char*)ppuBus.SPRT_SHIFTER_LOW.getRaw(),sizeof(OBJECT_ATTRIBUTE) * size);
+                file.write((char*)ppuBus.SPRT_SHIFTER_LOW.getRaw(), size);
                 
-
                 file.write((char*)&cartridge.PRGROMSize,sizeof(size_t));
                 file.write((char*)cartridge.PRGROM.get(), cartridge.PRGROMSize);
                 file.write((char*)&cartridge.CHRROMSize,sizeof(size_t));
@@ -284,6 +282,7 @@ namespace nesemulator
                     default:
                         break;
                 }
+
                 
 
                 file.read((char*)&ppu.col, sizeof(short));
@@ -340,13 +339,11 @@ namespace nesemulator
                 ppuBus.SPRT_SHIFTER_LOW = Array<BYTE>(bArr,size);
                 
 
-                file.read((char*)&size,sizeof(int));
-                cartridge.PRGROMSize = size;
-                cartridge.PRGROM = std::unique_ptr<BYTE[]>(new BYTE[size]);
+                file.read((char*)&cartridge.PRGROMSize,sizeof(size_t));
+                cartridge.PRGROM = std::unique_ptr<BYTE[]>(new BYTE[cartridge.PRGROMSize]);
                 file.read((char*)cartridge.PRGROM.get(), cartridge.PRGROMSize);
-                file.read((char*)&size,sizeof(int));
-                cartridge.CHRROMSize = size;
-                cartridge.CHRROM = std::unique_ptr<BYTE[]>(new BYTE[size]);
+                file.read((char*)&cartridge.CHRROMSize,sizeof(size_t));
+                cartridge.CHRROM = std::unique_ptr<BYTE[]>(new BYTE[cartridge.CHRROMSize]);
                 file.read((char*)cartridge.CHRROM.get(), cartridge.CHRROMSize);
             }
         };

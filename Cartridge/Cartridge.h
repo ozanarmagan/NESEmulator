@@ -13,24 +13,23 @@ namespace nesemulator
     class Cartridge 
     {
         public:
-            ~Cartridge() { delete [] PRGmemory; delete [] CHRmemory; };
             BYTE getPRGNum() { return PRGNum; };
             BYTE getCHRNum() { return CHRNum; };
-            BYTE getPRGData(ADDRESS32 address) { return PRGmemory[address]; };
-            BYTE getCHRData(ADDRESS32 address) { return CHRmemory[address]; };
+            BYTE getPRGData(ADDRESS32 address) { return PRGmemory.get()[address]; };
+            BYTE getCHRData(ADDRESS32 address) { return CHRmemory.get()[address]; };
             BYTE getMapperID() { return mapperID; };
-            void setPRGData(ADDRESS address,BYTE value) { PRGmemory[address] = value; };
-            void setCHRData(ADDRESS address,BYTE value) { CHRmemory[address] = value; };
+            void setPRGData(ADDRESS address,BYTE value) { PRGmemory.get()[address] = value; };
+            void setCHRData(ADDRESS address,BYTE value) { CHRmemory.get()[address] = value; };
             void setMapperID(int ID) { mapperID = ID; };
-            void loadPRGData(BYTE* PRGHead) { PRGmemory = PRGHead; };
-            void loadCHRData(BYTE* CHRHead) { CHRmemory = CHRHead; };
+            void loadPRGData(BYTE* PRGHead) { PRGmemory = std::unique_ptr<BYTE[]>(PRGHead); };
+            void loadCHRData(BYTE* CHRHead) { CHRmemory = std::unique_ptr<BYTE[]>(CHRHead); };
             void setPRGNum(BYTE _PRGNum) { PRGNum = _PRGNum;};
             void setCHRNum(BYTE _CHRNum) { CHRNum = _CHRNum;};
             friend std::ostream& operator<<(std::ostream& stream,Cartridge& cart);
         private:    
             friend class NES;
-            BYTE* PRGmemory;
-            BYTE* CHRmemory;
+            std::unique_ptr<BYTE[]> PRGmemory;
+            std::unique_ptr<BYTE[]> CHRmemory;
             BYTE mapperID;
             BYTE PRGNum;
             BYTE CHRNum;

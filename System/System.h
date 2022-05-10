@@ -21,6 +21,7 @@
 #include "../Utils/Queue.h"
 
 
+
 namespace nesemulator
 {
     /**
@@ -58,6 +59,7 @@ namespace nesemulator
             State states[STATE_COUNT];
             void loadState(int index);
             void saveCurrentState();
+            void loadState();
             std::string fileName;
     };
 }

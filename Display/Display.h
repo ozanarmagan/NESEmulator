@@ -7,7 +7,7 @@
 #include <SDL2/SDL_audio.h>
 #include <stdio.h>
 
-//#define DEBUG
+#define DEBUG
 
 namespace nesemulator
 {

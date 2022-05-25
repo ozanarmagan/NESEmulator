@@ -4,7 +4,7 @@
 namespace nesemulator
 {
     
-    Display::Display(SDL_Event* event,Controller& controller) : eventPtr(event),controller(controller)
+    Display::Display(SDL_Event* event,Controller& controller) : eventPtr(event),controller(controller),notificationManager(renderer,font)
     {
         if(SDL_Init(SDL_INIT_EVERYTHING) != 0)
             std::cout << "ERROR: SDL Couldn't initialized!\n";
@@ -32,6 +32,7 @@ namespace nesemulator
         
         SDL_PauseAudio(0);
 
+
     #ifdef DEBUG
         initDebug();
     #endif
@@ -41,6 +42,8 @@ namespace nesemulator
     void Display::init()
     {
         window = SDL_CreateWindow("NES Emulator - OzanArmagan", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, DISPLAY_WIDTH, DISPLAY_HEIGHT, 0);
+
+        TTF_Init();
 
         if(!window)
         {
@@ -53,6 +56,11 @@ namespace nesemulator
 
         //SDL_SetWindowBordered(window,SDL_FALSE);
         renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
+
+        TTF_Font* font = TTF_OpenFont("./sans.ttf",36);
+
+        notificationManager.setRenderer(renderer);
+        notificationManager.setFont(font);
 
         texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, RENDER_WIDTH, RENDER_HEIGHT);
 
@@ -77,12 +85,17 @@ namespace nesemulator
 
     void Display::renderFrame()
     {
-        SDL_UpdateTexture(texture, NULL, currentFrame, RENDER_WIDTH * sizeof(PIXEL));
-        SDL_RenderClear(renderer);
-        SDL_RenderCopy(renderer, texture, NULL, NULL);
-        SDL_RenderPresent(renderer);
 
-        //SDL_DestroyTexture(texture);
+        SDL_RenderClear(renderer);
+        SDL_UpdateTexture(texture, NULL, currentFrame, RENDER_WIDTH * sizeof(PIXEL));
+        SDL_RenderCopy(renderer, texture, NULL, NULL);
+
+        notificationManager.render();
+        
+        notificationManager.update();
+
+
+        SDL_RenderPresent(renderer);
 
         interval1 = interval0;
         interval0 = SDL_GetTicks();

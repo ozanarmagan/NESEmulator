@@ -170,7 +170,7 @@ namespace nesemulator
 
 
 
-        struct StateInfo
+        struct State
         {
             std::string fileName;
             short mapperID;

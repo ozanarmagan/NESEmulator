@@ -1,13 +1,15 @@
 #ifndef DISPLAY_H
 #define DISPLAY_H
+
 #define SDL_MAIN_HANDLED
 #include "../Utils/handler.h"
 #include "../Controller/Controller.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_audio.h>
+#include <SDL2/SDL_ttf.h>
 #include <stdio.h>
 
-#define DEBUG
+#include "../UI/NotificationManager.h"
 
 namespace nesemulator
 {
@@ -25,6 +27,7 @@ namespace nesemulator
             void setPixel(int x, int y, PIXEL_RGB pixelColors); // Set pixel in the pixel matrix
             void frameDone(); // Transfer next frame to current frame 
             void renderFrame(); // Render current frame
+            ui::NotificationManager& getNotificationManager() { return notificationManager; };
     #ifdef DEBUG
             void renderDebugFrame(); // Render Debug Frame
             void setPixelDebug(int x, int y, PIXEL_RGB colors); // Set pixel for debug window
@@ -43,8 +46,10 @@ namespace nesemulator
             SDL_Texture *Dtexture;
             SDL_Event *eventPtr;
             Controller& controller;
+            TTF_Font *font;
             TIMER interval0 = 0,interval1 = 0; //Interval between frames to track FPS
             int pitch = RENDER_WIDTH * sizeof(PIXEL);
+            ui::NotificationManager notificationManager;
     };
 }
 

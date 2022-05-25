@@ -140,10 +140,17 @@ namespace nesemulator
                 innerClock += 1.0;
             }
             display.renderFrame();
-            if(controller.getSaveButtonStatus())
-                saveCurrentState();
-            if(controller.getLoadButtonStatus())
-                loadState();
+
+        if(controller.getSaveButtonStatus() && !hasSaved)
+            saveCurrentState();
+        if(controller.getLoadButtonStatus() && !hasLoaded)
+            loadState();
+        if(hasSaved && !controller.getSaveButtonStatus())
+            hasSaved = false;
+        if(hasLoaded && !controller.getLoadButtonStatus())
+            hasLoaded = false;
+
+
     #ifdef DEBUG
             ppu.getPatternTable();
             display.renderDebugFrame();
@@ -205,7 +212,8 @@ namespace nesemulator
 
     void NES::saveCurrentState()
     {
-        StateManagement::StateInfo state;
+        display.getNotificationManager().addNotification("Saving current state...",ui::notificationColors::info, 3000);
+        StateManagement::State state;
         state.cartridge.initCartridge(cartridge.getPRGNum() * 16384, cartridge.getCHRNum() * 8192);
         state.cartridge.loadPRGData(cartridge.PRGmemory.get());
         state.cartridge.loadCHRData(cartridge.CHRmemory.get());
@@ -328,13 +336,14 @@ namespace nesemulator
         }
 
         state.writeToFile("save.bin");
+        hasSaved = true;
     }
 
     void NES::loadState()
     {
-        StateManagement::StateInfo state;
+        StateManagement::State state;
         state.readFromFile("save.bin");
-
+        display.getNotificationManager().addNotification("Loaded state",ui::notificationColors::warning, 3000);
         apu.clock = state.apu.clock;
         apu.countToFrameCounterReset = state.apu.countToFrameCounterReset;
         apu.dmc = state.apu.dmc;
@@ -452,6 +461,8 @@ namespace nesemulator
 
         cartridge.PRGmemory = std::move(state.cartridge.PRGROM);
         cartridge.CHRmemory = std::move(state.cartridge.CHRROM);
+
+        hasLoaded = true;
     }
 
 }

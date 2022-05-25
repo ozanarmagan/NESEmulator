@@ -1,5 +1,5 @@
 CXX = g++ 
-CCXXFLAGS =  -lSDL2 -lSDL2main
+CCXXFLAGS =  -lSDL2 -lSDL2main -lSDL2_TTF
 LDFLAGS = -O3 -std=c++17
 
 SRC = $(wildcard */*.cpp) *.cpp 

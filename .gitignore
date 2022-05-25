@@ -1,6 +1,7 @@
 *.slo
 *.lo
 *.o
+*.ttf
 *.obj
 *.gch
 *.pch

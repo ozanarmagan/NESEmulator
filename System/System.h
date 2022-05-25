@@ -2,7 +2,6 @@
 #include <fstream>
 
 #include "../Utils/handler.h"
-#include "../State/State.h"
 #include "../State/StateManagement.h"
 #include "../Cartridge/Cartridge.h"
 #include "../Mapper/MapperBase.h"
@@ -56,10 +55,10 @@ namespace nesemulator
             Controller controller;
             double innerClock = 0;
             inline static double cyclesPerSample = 121.53;
-            State states[STATE_COUNT];
             void loadState(int index);
             void saveCurrentState();
             void loadState();
             std::string fileName;
+            bool hasSaved = false,hasLoaded = false;
     };
 }

@@ -174,6 +174,7 @@ namespace nesemulator
         {
             std::string fileName;
             short mapperID;
+            BYTE mirroringMode; /* 0 = horizontal, 1 = vertical */
             TIMER systemTime;
             double innerClock;
             CartridgeState cartridge;
@@ -189,6 +190,7 @@ namespace nesemulator
                 std::ofstream file(fileName, std::ios::binary);
 
                 file.write((char*)&mapperID, sizeof(short));
+                file.write((char*)&mirroringMode, 1);
                 file.write((char*)&systemTime, sizeof(TIMER));
                 file.write((char*)&innerClock, sizeof(double));
                 
@@ -266,6 +268,7 @@ namespace nesemulator
                 std::ifstream file(fileName, std::ios::binary);
 
                 file.read((char*)&mapperID, sizeof(short));
+                file.read((char*)&mirroringMode, 1);
                 file.read((char*)&systemTime, sizeof(TIMER));
                 file.read((char*)&innerClock, sizeof(double));
                 

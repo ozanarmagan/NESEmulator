@@ -301,6 +301,8 @@ namespace nesemulator
         state.ppuBus.SPRT_SHIFTER_HIGH = ppuBus.SPRT_SHIFTER_HIGH;
         state.ppuBus.SPRT_SHIFTER_LOW = ppuBus.SPRT_SHIFTER_LOW;
 
+
+        state.mirroringMode = mapper->getMirroring() == MIRRORING::VERTICAL ? 1 : 0;
         switch(cartridge.getMapperID())
         {
             case 0:
@@ -455,6 +457,8 @@ namespace nesemulator
             default:
                 break;
         }
+
+        mapper->setMirroring(state.mirroringMode == 0 ? MIRRORING::HORIZONTAL : MIRRORING::VERTICAL);
 
         cartridge.CHRNum = state.cartridge.CHRROMSize / 8192;
         cartridge.PRGNum = state.cartridge.PRGROMSize / 16384;

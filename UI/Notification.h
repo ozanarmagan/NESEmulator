@@ -45,8 +45,8 @@ namespace nesemulator
                 void setFinished(bool _finished) { finished = _finished; };
                 void setText(std::string _text) { text = _text; };
                 void setDuration(TIMER _duration) { duration = _duration; };
-                void setColor(int _r, int _g, int _b) { r = _r; g = _g; b = _b; };
-                void setAlpha(int _alpha) { alpha = _alpha; };
+                void setColor(int _r, int _g, int _b) { color.r = _r; color.g = _g; color.b = _b; };
+                void setAlpha(int _alpha) { color.a = _alpha; };
                 void setFont(TTF_Font* _font) { font = _font; };
                 void setRenderer(SDL_Renderer* _renderer) { renderer = _renderer; };
                 void setTextSize(int _size) { textSize = _size; };
@@ -66,10 +66,7 @@ namespace nesemulator
             private:
                 std::string text;
                 int64_t duration;
-                int r;
-                int g;
-                int b;
-                int alpha;
+                SDL_Color color;
                 TTF_Font* font;
                 SDL_Renderer* renderer;
                 int textSize;
@@ -108,10 +105,7 @@ namespace nesemulator
             finished = false;
             font = _font;
             renderer = _renderer;
-            r = _color.r;
-            g = _color.g;
-            b = _color.b;
-            alpha = _color.a;
+            color = _color;
         }
 
 
@@ -127,7 +121,7 @@ namespace nesemulator
 
         inline void Notification::draw(int x,int y)
         {
-            SDL_Surface* surface = TTF_RenderText_Blended(font, text.c_str(), {r, g, b, alpha});
+            SDL_Surface* surface = TTF_RenderText_Blended(font, text.c_str(), color);
             SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
             SDL_Rect rect = {x, y, surface->w / 5, surface->h / 5};
             SDL_RenderCopy(renderer, texture, NULL, &rect);
@@ -146,7 +140,7 @@ namespace nesemulator
 
         inline bool Notification::operator==(const Notification& other) const
         {
-            return (text == other.text && duration == other.duration && r == other.r && g == other.g && b == other.b && alpha == other.alpha && font == other.font && renderer == other.renderer && textSize == other.textSize && textStyle == other.textStyle && textOutline == other.textOutline && textOutlineR == other.textOutlineR && textOutlineG == other.textOutlineG && textOutlineB == other.textOutlineB && textShadow == other.textShadow && textShadowR == other.textShadowR && textShadowG == other.textShadowG && textShadowB == other.textShadowB && textShadowX == other.textShadowX && textShadowY == other.textShadowY && textShadowBlur == other.textShadowBlur && textShadowBlurRadius == other.textShadowBlurRadius && textShadowSpread == other.textShadowSpread && textShadowQuality == other.textShadowQuality && textShadowThickness == other.textShadowThickness && textShadowType == other.textShadowType && finished == other.finished);
+            return (text == other.text && duration == other.duration  && font == other.font && renderer == other.renderer && textSize == other.textSize && textStyle == other.textStyle && textOutline == other.textOutline && textOutlineR == other.textOutlineR && textOutlineG == other.textOutlineG && textOutlineB == other.textOutlineB && textShadow == other.textShadow && textShadowR == other.textShadowR && textShadowG == other.textShadowG && textShadowB == other.textShadowB && textShadowX == other.textShadowX && textShadowY == other.textShadowY && textShadowBlur == other.textShadowBlur && textShadowBlurRadius == other.textShadowBlurRadius && textShadowSpread == other.textShadowSpread && textShadowQuality == other.textShadowQuality && textShadowThickness == other.textShadowThickness && textShadowType == other.textShadowType && finished == other.finished);
         }
     }
 
